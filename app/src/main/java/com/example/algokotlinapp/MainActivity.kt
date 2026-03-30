@@ -97,7 +97,6 @@ fun MainMenuScreen(modifier: Modifier=Modifier, onNavigate: (String) -> Unit) {
         modifier=modifier.fillMaxSize(),
         verticalArrangement=Arrangement.Center,
         horizontalAlignment=Alignment.CenterHorizontally
-
     ) {
         Image(
             painter=painterResource(id=R.drawable.tsulogo1),
@@ -141,7 +140,6 @@ fun RouteScreen(modifier: Modifier=Modifier, onBack: () -> Unit) {
         Text("Здесь будет карта рощи и маршруты", fontSize=24.sp)
     }
 }
-
 
 @Composable
 fun FoodScreen(modifier: Modifier=Modifier, onBack: () -> Unit) {
@@ -199,6 +197,7 @@ fun NeuralNetScreen(modifier: Modifier=Modifier, onBack: () -> Unit) {
 
         Spacer(modifier=Modifier.height(8.dp))
         Text(
+            text=if (prediction != null) "Результат: $prediction" else "Нарисуйте цифру и нажмите Распознать",
             fontSize=18.sp,
             fontWeight=FontWeight.Medium,
             color=if (prediction != null) TsuBluePrimary else Color.Gray
@@ -226,6 +225,7 @@ fun NeuralNetScreen(modifier: Modifier=Modifier, onBack: () -> Unit) {
                                     if (col in 0 until gridSize && row in 0 until gridSize) {
                                         for (i in -1..1) {
                                             for (j in -1..1) {
+                                                val newRow=row + i
                                                 val newCol=col + j
                                                 if (newRow in 0 until gridSize && newCol in 0 until gridSize) {
                                                     val newIndex=newRow * gridSize + newCol
@@ -274,6 +274,7 @@ fun NeuralNetScreen(modifier: Modifier=Modifier, onBack: () -> Unit) {
 
                 pixels.forEach { isFilled ->
                     inputBuffer.putFloat(if (isFilled) 1.0f else 0.0f)
+                }
 
                 val outputBuffer=Array(1) { FloatArray(10) }
 
