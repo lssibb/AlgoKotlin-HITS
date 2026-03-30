@@ -1,6 +1,5 @@
 package com.example.algokotlinapp.ui.theme
 
-import android.app.Activity
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
@@ -10,17 +9,33 @@ import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
+import com.example.algokotlinapp.R
+
+
+val GolosFontFamily = FontFamily(
+    Font(resId = R.font.golostextregular, weight = FontWeight.Normal),
+    Font(resId = R.font.golostextmedium, weight = FontWeight.Medium),
+    Font(resId = R.font.golostextbold, weight = FontWeight.Bold)
+)
 
 private val DarkColorScheme = darkColorScheme(
-    primary = Purple80,
-    secondary = PurpleGrey80,
-    tertiary = Pink80
+    primary = TsuBluePrimary,
+    secondary = TsuBlueSecondary,
+    tertiary = TsuBluePrimary
 )
 
 private val LightColorScheme = lightColorScheme(
-    primary = Purple40,
-    secondary = PurpleGrey40,
-    tertiary = Pink40
+    primary = TsuBluePrimary,
+    secondary = TsuBlueSecondary,
+    tertiary = TsuBluePrimary,
+    background = TsuBackgroundLight,
+    surface = PureWhite,
+    onPrimary = PureWhite,
+    onBackground = TsuTextDark,
+    onSurface = TsuTextDark
 )
 
 @Composable
@@ -34,7 +49,6 @@ fun AlgoKotlinAppTheme(
             val context = LocalContext.current
             if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
         }
-
         darkTheme -> DarkColorScheme
         else -> LightColorScheme
     }
