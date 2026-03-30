@@ -1,5 +1,10 @@
 package com.example.algokotlinapp
 
+import android.os.Bundle
+import android.widget.Toast
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -7,26 +12,35 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
-import android.os.Bundle
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Button
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.algokotlinapp.algorithms.runAstar
 import com.example.algokotlinapp.ui.theme.*
+import org.tensorflow.lite.Interpreter
+import java.io.FileInputStream
+import java.nio.ByteBuffer
+import java.nio.ByteOrder
+import java.nio.channels.FileChannel
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -85,9 +99,8 @@ fun MainMenuScreen(modifier: Modifier=Modifier, onNavigate: (String) -> Unit) {
         horizontalAlignment=Alignment.CenterHorizontally
 
     ) {
-        //логотгу
-        androidx.compose.foundation.Image(
-            painter=androidx.compose.ui.res.painterResource(id=R.drawable.tsulogo1),
+        Image(
+            painter=painterResource(id=R.drawable.tsulogo1),
             contentDescription="Логотип ТГУ",
             modifier=Modifier
                 .size(250.dp)
@@ -150,7 +163,25 @@ fun CoworkingScreen(modifier: Modifier=Modifier, onBack: () -> Unit) {
 
 @Composable
 fun NeuralNetScreen(modifier: Modifier=Modifier, onBack: () -> Unit) {
-    val pixels=remember { mutableStateListOf(*Array(25) { false }) }
+    val gridSize=50
+    val pixels=remember { mutableStateListOf(*Array(gridSize * gridSize) { false }) }
+    val context=LocalContext.current
+    var prediction by remember { mutableStateOf<Int?>(null) }
+
+    val interpreter=remember {
+        try {
+            val fileDescriptor=context.assets.openFd("model_50x50.tflite")
+            val inputStream=FileInputStream(fileDescriptor.fileDescriptor)
+            val fileChannel=inputStream.channel
+            val startOffset=fileDescriptor.startOffset
+            val declaredLength=fileDescriptor.declaredLength
+            val buffer=fileChannel.map(FileChannel.MapMode.READ_ONLY, startOffset, declaredLength)
+            Interpreter(buffer)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
+    }
 
     Column(
         modifier=modifier.fillMaxSize().padding(16.dp),
@@ -158,32 +189,72 @@ fun NeuralNetScreen(modifier: Modifier=Modifier, onBack: () -> Unit) {
     ) {
         Button(onClick=onBack, modifier=Modifier.align(Alignment.Start)) { Text("<- Назад") }
 
-        Spacer(modifier=Modifier.height(32.dp))
+        Spacer(modifier=Modifier.height(16.dp))
         Text(
-            text="Нарисуйте оценку (0-9)",
+            text="Нарисуйте цифру (0-9)",
             fontSize=24.sp,
             fontWeight=FontWeight.Bold,
             color=TsuBluePrimary
         )
-        Spacer(modifier=Modifier.height(32.dp))
-        Column(
+
+        Spacer(modifier=Modifier.height(8.dp))
+        Text(
+            fontSize=18.sp,
+            fontWeight=FontWeight.Medium,
+            color=if (prediction != null) TsuBluePrimary else Color.Gray
+        )
+
+        Spacer(modifier=Modifier.height(16.dp))
+
+        Box(
             modifier=Modifier
-                .padding(16.dp)
+                .size(300.dp)
                 .border(2.dp, PixelBorder)
-        ) {
-            for (row in 0 until 5) {
-                Row {
-                    for (col in 0 until 5) {
-                        val index=row * 5 + col
-                        Box(
-                            modifier=Modifier
-                                .size(60.dp)
-                                .background(if (pixels[index]) PixelFilled else PixelEmpty)
-                                .border(1.dp, PixelBorder)
-                                .clickable {
-                                    pixels[index]=!pixels[index]
+                .background(PixelEmpty)
+                .pointerInput(Unit) {
+                    awaitPointerEventScope {
+                        while (true) {
+                            val event=awaitPointerEvent()
+                            event.changes.forEach { change ->
+                                if (change.pressed) {
+                                    val cellWidth=size.width.toFloat() / gridSize
+                                    val cellHeight=size.height.toFloat() / gridSize
+
+                                    val col=(change.position.x / cellWidth).toInt()
+                                    val row=(change.position.y / cellHeight).toInt()
+
+                                    if (col in 0 until gridSize && row in 0 until gridSize) {
+                                        for (i in -1..1) {
+                                            for (j in -1..1) {
+                                                val newCol=col + j
+                                                if (newRow in 0 until gridSize && newCol in 0 until gridSize) {
+                                                    val newIndex=newRow * gridSize + newCol
+                                                    pixels[newIndex]=true
+                                                }
+                                            }
+                                        }
+                                    }
+                                    change.consume()
                                 }
-                        )
+                            }
+                        }
+                    }
+                }
+        ) {
+            Canvas(modifier=Modifier.fillMaxSize()) {
+                val cellWidth=size.width / gridSize
+                val cellHeight=size.height / gridSize
+
+                for (row in 0 until gridSize) {
+                    for (col in 0 until gridSize) {
+                        val index=row * gridSize + col
+                        if (pixels[index]) {
+                            drawRect(
+                                color=PixelFilled,
+                                topLeft=Offset(col * cellWidth, row * cellHeight),
+                                size=Size(cellWidth, cellHeight)
+                            )
+                        }
                     }
                 }
             }
@@ -193,8 +264,32 @@ fun NeuralNetScreen(modifier: Modifier=Modifier, onBack: () -> Unit) {
 
         Button(
             onClick={
-                val inputForNeuralNet=pixels.map { if (it) 1 else 0 }
-                println("Отправляем в нейросеть массив: $inputForNeuralNet")
+                if (interpreter == null) {
+                    Toast.makeText(context, "Файл модели не найден в assets!", Toast.LENGTH_SHORT).show()
+                    return@Button
+                }
+
+                val inputBuffer=ByteBuffer.allocateDirect(1 * gridSize * gridSize * 1 * 4)
+                inputBuffer.order(ByteOrder.nativeOrder())
+
+                pixels.forEach { isFilled ->
+                    inputBuffer.putFloat(if (isFilled) 1.0f else 0.0f)
+
+                val outputBuffer=Array(1) { FloatArray(10) }
+
+                interpreter.run(inputBuffer, outputBuffer)
+
+                val probabilities=outputBuffer[0]
+                var maxIdx=0
+                var maxProb=probabilities[0]
+                for (i in 1 until probabilities.size) {
+                    if (probabilities[i] > maxProb) {
+                        maxProb=probabilities[i]
+                        maxIdx=i
+                    }
+                }
+
+                prediction=maxIdx
             },
             modifier=Modifier.fillMaxWidth(0.6f).height(50.dp)
         ) {
@@ -202,12 +297,13 @@ fun NeuralNetScreen(modifier: Modifier=Modifier, onBack: () -> Unit) {
         }
 
         Spacer(modifier=Modifier.height(16.dp))
-        androidx.compose.material3.OutlinedButton(
+        OutlinedButton(
             onClick={
-                for (i in 0 until 25) { pixels[i]=false }
+                for (i in 0 until gridSize * gridSize) { pixels[i]=false }
+                prediction=null
             },
             modifier=Modifier.fillMaxWidth(0.6f).height(50.dp),
-            border=androidx.compose.foundation.BorderStroke(1.dp, Color.Gray)
+            border=BorderStroke(1.dp, Color.Gray)
         ) {
             Text("Очистить поле", color=Color.Gray, fontSize=18.sp)
         }
