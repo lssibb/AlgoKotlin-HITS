@@ -223,8 +223,8 @@ fun NeuralNetScreen(modifier: Modifier=Modifier, onBack: () -> Unit) {
                                     val row=(change.position.y / cellHeight).toInt()
 
                                     if (col in 0 until gridSize && row in 0 until gridSize) {
-                                        for (i in -1..1) {
-                                            for (j in -1..1) {
+                                        for (i in -2..2) {
+                                            for (j in -2..2) {
                                                 val newRow=row + i
                                                 val newCol=col + j
                                                 if (newRow in 0 until gridSize && newCol in 0 until gridSize) {
