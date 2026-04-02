@@ -1,5 +1,4 @@
 package com.example.algokotlinapp
-
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
@@ -159,6 +158,104 @@ fun CoworkingScreen(modifier: Modifier=Modifier, onBack: () -> Unit) {
     }
 }
 
+class NativeInference(private val context: android.content.Context) {
+    private val inputSize=2500
+    private val hiddenSize=128
+    private val outputSize=10
+
+    private val W1: FloatArray
+    private val b1: FloatArray
+    private val W2: FloatArray
+    private val b2: FloatArray
+
+    init {
+        W1=loadFloatArray("w1.bin", hiddenSize * inputSize)
+        b1=loadFloatArray("b1.bin", hiddenSize)
+        W2=loadFloatArray("w2.bin", outputSize * hiddenSize)
+        b2=loadFloatArray("b2.bin", outputSize)
+    }
+
+    private fun loadFloatArray(fileName: String, expectedSize: Int): FloatArray {
+        val stream=context.assets.open(fileName)
+        val bytes=stream.readBytes()
+        stream.close()
+        val buffer=ByteBuffer.wrap(bytes).order(ByteOrder.LITTLE_ENDIAN)
+        val floatArray=FloatArray(expectedSize)
+        buffer.asFloatBuffer().get(floatArray)
+        return floatArray
+    }
+
+    fun predict(X: FloatArray): Int {
+        val Z1=FloatArray(hiddenSize)
+        for (i in 0 until hiddenSize) {
+            var sum=b1[i]
+            for (j in 0 until inputSize) {
+                sum += W1[i * inputSize + j] * X[j]
+            }
+            Z1[i]=if (sum > 0) sum else 0f
+        }
+
+        val Z2=FloatArray(outputSize)
+        for (i in 0 until outputSize) {
+            var sum=b2[i]
+            for (j in 0 until hiddenSize) {
+                sum += W2[i * hiddenSize + j] * Z1[j]
+            }
+            Z2[i]=sum
+        }
+
+        var maxIdx=0
+        var maxVal=Z2[0]
+        for (i in 1 until outputSize) {
+            if (Z2[i] > maxVal) {
+                maxVal=Z2[i]
+                maxIdx=i
+            }
+        }
+
+        return maxIdx
+    }
+}
+
+fun centerAndFlattenImage(pixels: List<Boolean>, gridSize: Int): FloatArray {
+    var minX=gridSize
+    var maxX=-1
+    var minY=gridSize
+    var maxY=-1
+    for (row in 0 until gridSize) {
+        for (col in 0 until gridSize) {
+            if (pixels[row * gridSize + col]) {
+                if (col < minX) minX=col
+                if (col > maxX) maxX=col
+                if (row < minY) minY=row
+                if (row > maxY) maxY=row
+            }
+        }
+    }
+
+    val result=FloatArray(gridSize * gridSize)
+    if (maxX < 0) return result
+
+    val digitWidth=maxX - minX + 1
+    val digitHeight=maxY - minY + 1
+
+    val offsetX=(gridSize - digitWidth) / 2 - minX
+    val offsetY=(gridSize - digitHeight) / 2 - minY
+
+    for (row in 0 until gridSize) {
+        for (col in 0 until gridSize) {
+            if (pixels[row * gridSize + col]) {
+                val newRow=row + offsetY
+                val newCol=col + offsetX
+                if (newRow in 0 until gridSize && newCol in 0 until gridSize) {
+                    result[newRow * gridSize + newCol]=1.0f
+                }
+            }
+        }
+    }
+    return result
+}
+
 @Composable
 fun NeuralNetScreen(modifier: Modifier=Modifier, onBack: () -> Unit) {
     val gridSize=50
@@ -166,15 +263,9 @@ fun NeuralNetScreen(modifier: Modifier=Modifier, onBack: () -> Unit) {
     val context=LocalContext.current
     var prediction by remember { mutableStateOf<Int?>(null) }
 
-    val interpreter=remember {
+    val nativeNet=remember {
         try {
-            val fileDescriptor=context.assets.openFd("model_50x50.tflite")
-            val inputStream=FileInputStream(fileDescriptor.fileDescriptor)
-            val fileChannel=inputStream.channel
-            val startOffset=fileDescriptor.startOffset
-            val declaredLength=fileDescriptor.declaredLength
-            val buffer=fileChannel.map(FileChannel.MapMode.READ_ONLY, startOffset, declaredLength)
-            Interpreter(buffer)
+            NativeInference(context)
         } catch (e: Exception) {
             e.printStackTrace()
             null
@@ -223,13 +314,16 @@ fun NeuralNetScreen(modifier: Modifier=Modifier, onBack: () -> Unit) {
                                     val row=(change.position.y / cellHeight).toInt()
 
                                     if (col in 0 until gridSize && row in 0 until gridSize) {
-                                        for (i in -2..2) {
-                                            for (j in -2..2) {
-                                                val newRow=row + i
-                                                val newCol=col + j
-                                                if (newRow in 0 until gridSize && newCol in 0 until gridSize) {
-                                                    val newIndex=newRow * gridSize + newCol
-                                                    pixels[newIndex]=true
+                                        val radius=2
+                                        for (i in -radius..radius) {
+                                            for (j in -radius..radius) {
+                                                if (i * i + j * j <= radius * radius) {
+                                                    val newRow=row + i
+                                                    val newCol=col + j
+                                                    if (newRow in 0 until gridSize && newCol in 0 until gridSize) {
+                                                        val newIndex=newRow * gridSize + newCol
+                                                        pixels[newIndex]=true
+                                                    }
                                                 }
                                             }
                                         }
@@ -264,33 +358,12 @@ fun NeuralNetScreen(modifier: Modifier=Modifier, onBack: () -> Unit) {
 
         Button(
             onClick={
-                if (interpreter == null) {
-                    Toast.makeText(context, "Файл модели не найден в assets!", Toast.LENGTH_SHORT).show()
+                if (nativeNet == null) {
+                    Toast.makeText(context, "Файлы весов не найдены в assets!", Toast.LENGTH_SHORT).show()
                     return@Button
                 }
-
-                val inputBuffer=ByteBuffer.allocateDirect(1 * gridSize * gridSize * 1 * 4)
-                inputBuffer.order(ByteOrder.nativeOrder())
-
-                pixels.forEach { isFilled ->
-                    inputBuffer.putFloat(if (isFilled) 1.0f else 0.0f)
-                }
-
-                val outputBuffer=Array(1) { FloatArray(10) }
-
-                interpreter.run(inputBuffer, outputBuffer)
-
-                val probabilities=outputBuffer[0]
-                var maxIdx=0
-                var maxProb=probabilities[0]
-                for (i in 1 until probabilities.size) {
-                    if (probabilities[i] > maxProb) {
-                        maxProb=probabilities[i]
-                        maxIdx=i
-                    }
-                }
-
-                prediction=maxIdx
+                val inputArray=centerAndFlattenImage(pixels.toList(), gridSize)
+                prediction=nativeNet.predict(inputArray)
             },
             modifier=Modifier.fillMaxWidth(0.6f).height(50.dp)
         ) {
