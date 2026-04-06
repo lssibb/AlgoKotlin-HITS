@@ -34,7 +34,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.algokotlinapp.algorithms.runAstar
+import com.example.algokotlinapp.algorithms.astar
 import com.example.algokotlinapp.ui.theme.*
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
@@ -51,7 +51,6 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        runAstar()
         setContent {
             AlgoKotlinAppTheme {
                 var currentScreen by remember { mutableStateOf("MainMenu") }
@@ -371,9 +370,108 @@ fun CampusMapScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
 }
 @Composable
 fun RouteScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
-    Column(modifier = modifier.fillMaxSize().padding(16.dp)) {
-        Button(onClick = onBack) { Text("Назад") }
-        Text("Навигация (алгоритм A*)", fontSize = 24.sp)
+    val context = LocalContext.current
+    val grid = remember {
+        val reader = context.assets.open("tsu_campus_matrix.txt").bufferedReader()
+        val lines = reader.readLines()
+        lines.map { line ->
+            line.map { it.toString().toInt() }.toIntArray()
+        }.toTypedArray()
+    }
+
+    var start by remember { mutableStateOf<Pair<Int, Int>?>(null) }
+    var end by remember { mutableStateOf<Pair<Int, Int>?>(null) }
+
+    val path = remember(start, end) {
+        if (start != null && end != null)
+            astar(grid, start!!.first, start!!.second, end!!.first, end!!.second)
+        else null
+    }
+
+    Box(modifier = modifier.fillMaxSize()) {
+        val cellSizeDp = 8.dp
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .horizontalScroll(rememberScrollState())
+                .verticalScroll(rememberScrollState())
+        ) {
+        Canvas(
+            modifier = Modifier
+                .size(width = cellSizeDp * grid[0].size, height = cellSizeDp * grid.size)
+                .pointerInput(Unit) {
+                    detectTapGestures { offset ->
+                        val cellWidth = size.width.toFloat() / grid[0].size
+                        val cellHeight = size.height.toFloat() / grid.size
+                        val col = (offset.x / cellWidth).toInt()
+                        val row = (offset.y / cellHeight).toInt()
+                        if (row in grid.indices && col in grid[0].indices && grid[row][col] != 0) {
+                            if (start == null) {
+                                start = Pair(row, col)
+                            } else if (end == null) {
+                                end = Pair(row, col)
+                            }
+                        }
+                    }
+                }
+
+            ) {
+                val cellWidth = size.width / grid[0].size
+                val cellHeight = size.height / grid.size
+
+                for (row in 0 until grid.size) {
+                    for (col in 0 until grid[0].size) {
+                        val color = when (grid[row][col]) {
+                            0 -> Color(0xFF808080)
+                            1 -> Color(0xFFFFFF00)
+                            2 -> Color(0xFFFF00E6)
+                            3 -> Color(0xFF00EEFF)
+                            4 -> Color(0xFF1EFF00)
+                            5 -> Color(0xFFFF0400)
+                            6 -> Color(0xFF900B09)
+                            7 -> Color(0xFF532C00)
+                            8 -> Color(0xFF0011FF)
+                            else -> Color.LightGray
+                        }
+                        drawRect(
+                            color = color,
+                            topLeft = Offset(col * cellWidth, row * cellHeight),
+                            size = Size(cellWidth, cellHeight)
+                        )
+                    }
+                }
+                start?.let { (r, c) ->
+                    drawCircle(
+                        color = Color.Cyan,
+                        radius = cellWidth * 2,
+                        center = Offset(c * cellWidth + cellWidth / 2, r * cellHeight + cellHeight / 2)
+                    )
+                }
+                end?.let { (r, c) ->
+                    drawCircle(
+                        color = Color.Red,
+                        radius = cellWidth * 2,
+                        center = Offset(c * cellWidth + cellWidth / 2, r * cellHeight + cellHeight / 2)
+                    )
+                }
+                path?.forEach { (r, c) ->
+                    drawRect(
+                        color = Color.White,
+                        topLeft = Offset(c * cellWidth, r * cellHeight),
+                        size = Size(cellWidth, cellHeight)
+                    )
+                }
+            }
+        }
+        Column(
+            modifier = Modifier
+                .align(Alignment.TopStart)
+                .padding(16.dp)
+        ) {
+            Button(onClick = onBack) { Text("<- Назад") }
+            Spacer(modifier = Modifier.height(8.dp))
+            Button(onClick = { start = null; end = null }) { Text("Сбросить") }
+        }
     }
 }
 

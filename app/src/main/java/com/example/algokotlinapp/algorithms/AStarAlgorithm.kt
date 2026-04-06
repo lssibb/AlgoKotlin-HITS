@@ -37,7 +37,7 @@ fun astar(
             val ny = current.y + dy
 
             if (nx < 0 || ny < 0 || nx >= rows || ny >= cols) continue
-            if (grid[nx][ny] == 1) continue
+            if (grid[nx][ny] == 0) continue
             if ((nx to ny) in closed) continue
 
             val neighbor = Node(
