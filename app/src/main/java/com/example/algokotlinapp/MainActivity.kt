@@ -1,4 +1,5 @@
 package com.example.algokotlinapp
+import android.annotation.SuppressLint
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
@@ -100,6 +101,7 @@ fun MainMenuScreen(modifier: Modifier = Modifier, onNavigate: (String) -> Unit) 
     }
 }
 
+@SuppressLint("UnusedBoxWithConstraintsScope")
 @Composable
 fun CampusMapScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
     val mapData = remember {
@@ -117,7 +119,7 @@ fun CampusMapScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
                     '5' -> Color(0xFFFF0400)
                     '6' -> Color(0xFF900B09)
                     '7' -> Color(0xFF532C00)
-                    '8' -> Color(0x660011FF)
+
                     else -> Color.Transparent
                 }
                 if (color != Color.Transparent) tiles.add(Triple(c, r, color))
@@ -280,20 +282,50 @@ fun CampusMapScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
                     }
                 }
             }
-
-            Box(modifier = Modifier.align(Alignment.BottomEnd).padding(12.dp)) {
+            Column(
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(12.dp),
+                verticalArrangement = Arrangement.spacedBy(0.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
                 Surface(
-                    shape = RoundedCornerShape(10.dp),
-                    color = Color.White.copy(alpha = 0.92f),
-                    shadowElevation = 4.dp
+                    shape = RoundedCornerShape(12.dp),
+                    color = Color.White.copy(alpha = 0.95f),
+                    shadowElevation = 6.dp
                 ) {
-                    Text(
-                        "×${"%.1f".format(scale)}",
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = TsuBluePrimary,
-                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
-                    )
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        IconButton(
+                            onClick = {
+                                scale = (scale * 1.4f).coerceIn(1f, 8f)
+                            },
+                            modifier = Modifier.size(42.dp)
+                        ) {
+                            Text("+", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = TsuBluePrimary)
+                        }
+                        Box(modifier = Modifier.height(1.dp).width(34.dp).background(Color(0xFFE8E8E8)))
+                        Text(
+                            "×${"%.1f".format(scale)}",
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF999999),
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 5.dp)
+                        )
+                        Box(modifier = Modifier.height(1.dp).width(34.dp).background(Color(0xFFE8E8E8)))
+                        IconButton(
+                            onClick = {
+                                val newScale = (scale / 1.4f).coerceIn(1f, 8f)
+                                val maxOffX = ((mW * newScale) - bW).coerceAtLeast(0f) / 2f
+                                val maxOffY = ((mH * newScale) - bH).coerceAtLeast(0f) / 2f
+                                scale = newScale
+                                offsetX = offsetX.coerceIn(-maxOffX, maxOffX)
+                                offsetY = offsetY.coerceIn(-maxOffY, maxOffY)
+                            },
+                            modifier = Modifier.size(42.dp)
+                        ) {
+                            Text("−", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = TsuBluePrimary)
+                        }
+                    }
                 }
             }
         }
@@ -368,9 +400,11 @@ fun CampusMapScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
         }
     }
 }
+@SuppressLint("UnusedBoxWithConstraintsScope")
 @Composable
 fun RouteScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
     val context = LocalContext.current
+
     val grid = remember {
         val reader = context.assets.open("tsu_campus_matrix.txt").bufferedReader()
         val lines = reader.readLines()
@@ -379,8 +413,37 @@ fun RouteScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
         }.toTypedArray()
     }
 
+    val mapData = remember {
+        val lines = CAMPUS_MAP_DATA.trim().lines()
+        val gridRows = lines.size
+        val gridCols = lines.maxOfOrNull { it.length } ?: 0
+        val tiles = mutableListOf<Triple<Int, Int, Color>>()
+        for (r in lines.indices) {
+            for (c in lines[r].indices) {
+                val color = when (lines[r][c]) {
+                    '1' -> Color(0xFFFFFF00)
+                    '2' -> Color(0xFFFF00E6)
+                    '3' -> Color(0xFF00EEFF)
+                    '4' -> Color(0xFF1EFF00)
+                    '5' -> Color(0xFFFF0400)
+                    '6' -> Color(0xFF900B09)
+                    '7' -> Color(0xFF532C00)
+                    '8' -> Color(0x880044CC)
+                    else -> Color.Transparent
+                }
+                if (color != Color.Transparent) tiles.add(Triple(c, r, color))
+            }
+        }
+        Triple(gridCols, gridRows, tiles)
+    }
+    val mapCols = mapData.first
+    val mapRows = mapData.second
+    val allTiles = mapData.third
+
     var start by remember { mutableStateOf<Pair<Int, Int>?>(null) }
     var end by remember { mutableStateOf<Pair<Int, Int>?>(null) }
+    var selectedStart by remember { mutableStateOf<Pair<Int, Int>?>(null) }
+    var selectedEnd by remember { mutableStateOf<Pair<Int, Int>?>(null) }
 
     val path = remember(start, end) {
         if (start != null && end != null)
@@ -388,89 +451,375 @@ fun RouteScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
         else null
     }
 
-    Box(modifier = modifier.fillMaxSize()) {
-        val cellSizeDp = 8.dp
-        Box(
+    var scale by remember { mutableFloatStateOf(1f) }
+    var offsetX by remember { mutableFloatStateOf(0f) }
+    var offsetY by remember { mutableFloatStateOf(0f) }
+
+    val step = when {
+        start == null -> 0
+        end == null -> 1
+        else -> 2
+    }
+
+    Column(modifier = modifier.fillMaxSize().background(Color(0xFFF0F2F5))) {
+        Row(
             modifier = Modifier
-                .fillMaxSize()
-                .horizontalScroll(rememberScrollState())
-                .verticalScroll(rememberScrollState())
+                .fillMaxWidth()
+                .background(Color.White)
+                .padding(horizontal = 20.dp, vertical = 14.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-        Canvas(
-            modifier = Modifier
-                .size(width = cellSizeDp * grid[0].size, height = cellSizeDp * grid.size)
-                .pointerInput(Unit) {
-                    detectTapGestures { offset ->
-                        val cellWidth = size.width.toFloat() / grid[0].size
-                        val cellHeight = size.height.toFloat() / grid.size
-                        val col = (offset.x / cellWidth).toInt()
-                        val row = (offset.y / cellHeight).toInt()
-                        if (row in grid.indices && col in grid[0].indices && grid[row][col] != 0) {
-                            if (start == null) {
-                                start = Pair(row, col)
-                            } else if (end == null) {
-                                end = Pair(row, col)
-                            }
-                        }
-                    }
-                }
-
+            IconButton(
+                onClick = onBack,
+                modifier = Modifier
+                    .size(40.dp)
+                    .background(TsuBluePrimary, RoundedCornerShape(12.dp))
             ) {
-                val cellWidth = size.width / grid[0].size
-                val cellHeight = size.height / grid.size
-
-                for (row in 0 until grid.size) {
-                    for (col in 0 until grid[0].size) {
-                        val color = when (grid[row][col]) {
-                            0 -> Color(0xFF808080)
-                            1 -> Color(0xFFFFFF00)
-                            2 -> Color(0xFFFF00E6)
-                            3 -> Color(0xFF00EEFF)
-                            4 -> Color(0xFF1EFF00)
-                            5 -> Color(0xFFFF0400)
-                            6 -> Color(0xFF900B09)
-                            7 -> Color(0xFF532C00)
-                            8 -> Color(0xFF0011FF)
-                            else -> Color.LightGray
-                        }
-                        drawRect(
-                            color = color,
-                            topLeft = Offset(col * cellWidth, row * cellHeight),
-                            size = Size(cellWidth, cellHeight)
-                        )
-                    }
-                }
-                start?.let { (r, c) ->
-                    drawCircle(
-                        color = Color.Cyan,
-                        radius = cellWidth * 2,
-                        center = Offset(c * cellWidth + cellWidth / 2, r * cellHeight + cellHeight / 2)
-                    )
-                }
-                end?.let { (r, c) ->
-                    drawCircle(
-                        color = Color.Red,
-                        radius = cellWidth * 2,
-                        center = Offset(c * cellWidth + cellWidth / 2, r * cellHeight + cellHeight / 2)
-                    )
-                }
-                path?.forEach { (r, c) ->
-                    drawRect(
-                        color = Color.White,
-                        topLeft = Offset(c * cellWidth, r * cellHeight),
-                        size = Size(cellWidth, cellHeight)
+                Text("←", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+            }
+            Spacer(Modifier.width(14.dp))
+            Column {
+                Text(
+                    "Навигация A*",
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = Color(0xFF1A1A2E)
+                )
+                Text("ТГУ · Томск", fontSize = 12.sp, color = Color.Gray)
+            }
+            Spacer(Modifier.weight(1f))
+            if (start != null || end != null) {
+                Surface(
+                    shape = RoundedCornerShape(10.dp),
+                    color = Color(0xFFFFEEEE),
+                    modifier = Modifier.clickable { start = null; end = null; selectedStart = null; selectedEnd = null }
+                ) {
+                    Text(
+                        "Сброс",
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color(0xFFCC3333),
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
                     )
                 }
             }
         }
-        Column(
-            modifier = Modifier
-                .align(Alignment.TopStart)
-                .padding(16.dp)
+
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            color = Color.White,
+            shadowElevation = 2.dp
         ) {
-            Button(onClick = onBack) { Text("<- Назад") }
-            Spacer(modifier = Modifier.height(8.dp))
-            Button(onClick = { start = null; end = null }) { Text("Сбросить") }
+            Row(
+                modifier = Modifier.padding(horizontal = 20.dp, vertical = 10.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Surface(
+                    shape = RoundedCornerShape(8.dp),
+                    color = if (start != null) Color(0xFF00AA55) else if (step == 0) TsuBluePrimary else Color(0xFFE0E0E0)
+                ) {
+                    Text(
+                        if (start != null) "✓ Старт" else "① Старт",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = if (start != null || step == 0) Color.White else Color(0xFF888888),
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
+                    )
+                }
+                Text("→", color = Color(0xFFCCCCCC), fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                Surface(
+                    shape = RoundedCornerShape(8.dp),
+                    color = if (end != null) Color(0xFFCC3333) else if (step == 1) TsuBluePrimary else Color(0xFFE0E0E0)
+                ) {
+                    Text(
+                        if (end != null) "✓ Финиш" else "② Финиш",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = if (end != null || step == 1) Color.White else Color(0xFF888888),
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
+                    )
+                }
+                if (path != null) {
+                    Spacer(Modifier.weight(1f))
+                    Text(
+                        "${path.size} шагов",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = TsuBluePrimary
+                    )
+                }
+            }
+        }
+
+        BoxWithConstraints(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f)
+                .padding(horizontal = 16.dp, vertical = 12.dp)
+                .shadow(8.dp, RoundedCornerShape(24.dp))
+                .clip(RoundedCornerShape(24.dp))
+                .background(Color.White)
+        ) {
+            val bW = constraints.maxWidth.toFloat()
+            val bH = constraints.maxHeight.toFloat()
+            val fit = minOf(bW / mapCols, bH / mapRows)
+            val mW = fit * mapCols
+            val mH = fit * mapRows
+            val cellW = mW / mapCols
+            val cellH = mH / mapRows
+
+            val density = androidx.compose.ui.platform.LocalDensity.current
+            val mapWDp = with(density) { mW.toDp() }
+            val mapHDp = with(density) { mH.toDp() }
+            val mapStartXDp = with(density) { ((bW - mW) / 2f).toDp() }
+            val mapStartYDp = with(density) { ((bH - mH) / 2f).toDp() }
+
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .pointerInput(Unit) {
+                        detectTransformGestures { _, pan, zoom, _ ->
+                            val newScale = (scale * zoom).coerceIn(1f, 10f)
+                            scale = newScale
+                            val maxOffsetX = ((mW * scale) - bW).coerceAtLeast(0f) / 2f
+                            val maxOffsetY = ((mH * scale) - bH).coerceAtLeast(0f) / 2f
+                            offsetX = (offsetX + pan.x).coerceIn(-maxOffsetX, maxOffsetX)
+                            offsetY = (offsetY + pan.y).coerceIn(-maxOffsetY, maxOffsetY)
+                        }
+                    }
+                    .pointerInput(Unit) {
+                        detectTapGestures { tap ->
+                            val pivX = bW / 2f
+                            val pivY = bH / 2f
+                            val worldX = (tap.x - pivX - offsetX) / scale + pivX - (bW - mW) / 2f
+                            val worldY = (tap.y - pivY - offsetY) / scale + pivY - (bH - mH) / 2f
+                            val gridX = (worldX / cellW).toInt()
+                            val gridY = (worldY / cellH).toInt()
+                            if (gridY in grid.indices && gridX >= 0 && gridX < grid[0].size) {
+                                if (grid[gridY][gridX] != 0) {
+                                    when (step) {
+                                        0 -> { start = Pair(gridY, gridX); selectedStart = Pair(gridX, gridY) }
+                                        1 -> { end = Pair(gridY, gridX); selectedEnd = Pair(gridX, gridY) }
+                                    }
+                                }
+                            }
+                        }
+                    }
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .graphicsLayer(
+                            scaleX = scale,
+                            scaleY = scale,
+                            translationX = offsetX,
+                            translationY = offsetY
+                        )
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .offset(x = mapStartXDp, y = mapStartYDp)
+                            .size(width = mapWDp, height = mapHDp)
+                    ) {
+                        Image(
+                            painter = painterResource(id = R.drawable.campus_map),
+                            contentDescription = null,
+                            contentScale = ContentScale.FillBounds,
+                            modifier = Modifier.fillMaxSize()
+                        )
+                        Canvas(modifier = Modifier.fillMaxSize()) {
+                            val pathSet = path?.toSet() ?: emptySet()
+
+                            allTiles.forEach { (c, r, color) ->
+                                val cx = c * cellW
+                                val cy = r * cellH
+                                val center = Offset(cx + cellW / 2f, cy + cellH / 2f)
+
+                                if (color == Color(0x880044CC)) {
+                                    drawRoundRect(
+                                        Color(0x661A6FFF),
+                                        topLeft = Offset(cx, cy),
+                                        size = Size(cellW, cellH),
+                                        cornerRadius = CornerRadius(1.5f, 1.5f)
+                                    )
+                                } else {
+                                    val radius = minOf(cellW, cellH) * 1.8f
+                                    drawCircle(Color.Black.copy(alpha = 0.12f), radius + 1.5f, Offset(center.x + 1f, center.y + 1.5f))
+                                    drawCircle(color, radius, center)
+                                    drawCircle(Color.White, radius * 0.38f, center)
+                                }
+                            }
+
+                            pathSet.forEach { (r, c) ->
+                                drawCircle(
+                                    Color(0xFFFFFFFF).copy(alpha = 0.85f),
+                                    radius = minOf(cellW, cellH) * 0.7f,
+                                    center = Offset(c * cellW + cellW / 2f, r * cellH + cellH / 2f)
+                                )
+                            }
+
+                            selectedStart?.let { (c, r) ->
+                                val cx = c * cellW + cellW / 2f
+                                val cy = r * cellH + cellH / 2f
+                                val radius = minOf(cellW, cellH) * 2.5f
+                                drawCircle(Color(0xFF00AA55).copy(alpha = 0.3f), radius * 2f, Offset(cx, cy))
+                                drawCircle(Color(0xFF00AA55), radius, Offset(cx, cy))
+                                drawCircle(Color.White, radius * 0.5f, Offset(cx, cy))
+                            }
+
+                            selectedEnd?.let { (c, r) ->
+                                val cx = c * cellW + cellW / 2f
+                                val cy = r * cellH + cellH / 2f
+                                val radius = minOf(cellW, cellH) * 2.5f
+                                drawCircle(Color(0xFFCC3333).copy(alpha = 0.3f), radius * 2f, Offset(cx, cy))
+                                drawCircle(Color(0xFFCC3333), radius, Offset(cx, cy))
+                                drawCircle(Color.White, radius * 0.5f, Offset(cx, cy))
+                            }
+                        }
+                    }
+                }
+            }
+
+            Column(
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(12.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Surface(
+                    shape = RoundedCornerShape(12.dp),
+                    color = Color.White.copy(alpha = 0.95f),
+                    shadowElevation = 6.dp
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        IconButton(
+                            onClick = { scale = (scale * 1.4f).coerceIn(1f, 10f) },
+                            modifier = Modifier.size(42.dp)
+                        ) {
+                            Text("+", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = TsuBluePrimary)
+                        }
+                        Box(modifier = Modifier.height(1.dp).width(34.dp).background(Color(0xFFE8E8E8)))
+                        Text(
+                            "×${"%.1f".format(scale)}",
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF999999),
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 5.dp)
+                        )
+                        Box(modifier = Modifier.height(1.dp).width(34.dp).background(Color(0xFFE8E8E8)))
+                        IconButton(
+                            onClick = {
+                                val newScale = (scale / 1.4f).coerceIn(1f, 10f)
+                                val maxOffX = ((mW * newScale) - bW).coerceAtLeast(0f) / 2f
+                                val maxOffY = ((mH * newScale) - bH).coerceAtLeast(0f) / 2f
+                                scale = newScale
+                                offsetX = offsetX.coerceIn(-maxOffX, maxOffX)
+                                offsetY = offsetY.coerceIn(-maxOffY, maxOffY)
+                            },
+                            modifier = Modifier.size(42.dp)
+                        ) {
+                            Text("−", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = TsuBluePrimary)
+                        }
+                    }
+                }
+            }
+
+            if (start == null) {
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.TopCenter)
+                        .padding(top = 16.dp)
+                ) {
+                    Surface(
+                        shape = RoundedCornerShape(12.dp),
+                        color = TsuBluePrimary.copy(alpha = 0.9f),
+                        shadowElevation = 4.dp
+                    ) {
+                        Text(
+                            "Нажмите на карту, чтобы выбрать стартовую точку",
+                            fontSize = 12.sp,
+                            color = Color.White,
+                            fontWeight = FontWeight.Medium,
+                            modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp)
+                        )
+                    }
+                }
+            } else if (end == null) {
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.TopCenter)
+                        .padding(top = 16.dp)
+                ) {
+                    Surface(
+                        shape = RoundedCornerShape(12.dp),
+                        color = TsuBluePrimary.copy(alpha = 0.9f),
+                        shadowElevation = 4.dp
+                    ) {
+                        Text(
+                            "Теперь выберите конечную точку маршрута",
+                            fontSize = 12.sp,
+                            color = Color.White,
+                            fontWeight = FontWeight.Medium,
+                            modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp)
+                        )
+                    }
+                }
+            }
+        }
+
+        AnimatedVisibility(
+            visible = path != null,
+            enter = slideInVertically(initialOffsetY = { it }) + fadeIn(tween(250)),
+            exit = slideOutVertically(targetOffsetY = { it }) + fadeOut(tween(200))
+        ) {
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                color = Color.White,
+                shadowElevation = 20.dp,
+                shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)
+            ) {
+                Column(modifier = Modifier.padding(start = 24.dp, end = 24.dp, top = 16.dp, bottom = 24.dp)) {
+                    Box(
+                        modifier = Modifier
+                            .width(40.dp).height(4.dp)
+                            .background(Color(0xFFE0E0E0), RoundedCornerShape(2.dp))
+                            .align(Alignment.CenterHorizontally)
+                    )
+                    Spacer(Modifier.height(14.dp))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Surface(shape = RoundedCornerShape(12.dp), color = Color(0xFFEEF9EE), modifier = Modifier.size(44.dp)) {
+                            Text("🗺️", fontSize = 20.sp, modifier = Modifier.padding(10.dp))
+                        }
+                        Spacer(Modifier.width(12.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text("Маршрут построен", fontSize = 17.sp, fontWeight = FontWeight.Bold, color = Color(0xFF1A1A2E))
+                            Text("Длина: ${path?.size ?: 0} шагов", fontSize = 13.sp, color = TsuBluePrimary, fontWeight = FontWeight.Medium)
+                        }
+                        IconButton(onClick = { start = null; end = null; selectedStart = null; selectedEnd = null }) {
+                            Icon(Icons.Default.Close, contentDescription = null, tint = Color(0xFFBBBBBB))
+                        }
+                    }
+                    Spacer(Modifier.height(14.dp))
+                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Box(modifier = Modifier.size(12.dp).background(Color(0xFF00AA55), RoundedCornerShape(6.dp)))
+                            Spacer(Modifier.width(4.dp))
+                            Text("Старт", fontSize = 12.sp, color = Color(0xFF666666))
+                        }
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Box(modifier = Modifier.size(12.dp).background(Color(0xFFCC3333), RoundedCornerShape(6.dp)))
+                            Spacer(Modifier.width(4.dp))
+                            Text("Финиш", fontSize = 12.sp, color = Color(0xFF666666))
+                        }
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Box(modifier = Modifier.size(12.dp).background(Color.White, RoundedCornerShape(6.dp)).border(1.dp, Color(0xFFAAAAAA), RoundedCornerShape(6.dp)))
+                            Spacer(Modifier.width(4.dp))
+                            Text("Путь", fontSize = 12.sp, color = Color(0xFF666666))
+                        }
+                    }
+                }
+            }
         }
     }
 }
