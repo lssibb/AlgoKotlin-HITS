@@ -545,6 +545,10 @@ fun RouteScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
     var offsetX by remember { mutableFloatStateOf(0f) }
     var offsetY by remember { mutableFloatStateOf(0f) }
 
+    val calibOffsetX = -172f
+    val calibOffsetY = 12f
+    val calibScale = 1.316f
+
     val step = when {
         start == null -> 0
         end == null -> 1
@@ -678,14 +682,14 @@ fun RouteScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
                             offsetY = (offsetY + pan.y).coerceIn(-maxOffsetY, maxOffsetY)
                         }
                     }
-                    .pointerInput(Unit) {
+                    .pointerInput(step) {
                         detectTapGestures { tap ->
                             val pivX = bW / 2f
                             val pivY = bH / 2f
                             val worldX = (tap.x - pivX - offsetX) / scale + pivX - (bW - mW) / 2f
                             val worldY = (tap.y - pivY - offsetY) / scale + pivY - (bH - mH) / 2f
-                            val gridX = (worldX / cellW).toInt()
-                            val gridY = (worldY / cellH).toInt()
+                            val gridX = ((worldX - calibOffsetX) / (cellW * calibScale)).toInt()
+                            val gridY = ((worldY - calibOffsetY) / (cellH * calibScale)).toInt()
                             if (gridY in grid.indices && gridX >= 0 && gridX < grid[0].size) {
                                 if (grid[gridY][gridX] != 0) {
                                     when (step) {
@@ -720,21 +724,25 @@ fun RouteScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
                         )
                         Canvas(modifier = Modifier.fillMaxSize()) {
                             val pathSet = path?.toSet() ?: emptySet()
+                            val ccw = cellW * calibScale
+                            val cch = cellH * calibScale
+                            fun cellX(c: Int) = c * ccw + calibOffsetX
+                            fun cellY(r: Int) = r * cch + calibOffsetY
 
                             allTiles.forEach { (c, r, color) ->
-                                val cx = c * cellW
-                                val cy = r * cellH
-                                val center = Offset(cx + cellW / 2f, cy + cellH / 2f)
+                                val cx = cellX(c)
+                                val cy = cellY(r)
+                                val center = Offset(cx + ccw / 2f, cy + cch / 2f)
 
                                 if (color == Color(0x880044CC)) {
                                     drawRoundRect(
                                         Color(0x661A6FFF),
                                         topLeft = Offset(cx, cy),
-                                        size = Size(cellW, cellH),
+                                        size = Size(ccw, cch),
                                         cornerRadius = CornerRadius(1.5f, 1.5f)
                                     )
                                 } else {
-                                    val radius = minOf(cellW, cellH) * 1.8f
+                                    val radius = minOf(ccw, cch) * 1.8f
                                     drawCircle(Color.Black.copy(alpha = 0.12f), radius + 1.5f, Offset(center.x + 1f, center.y + 1.5f))
                                     drawCircle(color, radius, center)
                                     drawCircle(Color.White, radius * 0.38f, center)
@@ -743,25 +751,25 @@ fun RouteScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
 
                             pathSet.forEach { (r, c) ->
                                 drawCircle(
-                                    Color(0xFFFFFFFF).copy(alpha = 0.85f),
-                                    radius = minOf(cellW, cellH) * 0.7f,
-                                    center = Offset(c * cellW + cellW / 2f, r * cellH + cellH / 2f)
+                                    Color(0xFF1A6FFF),
+                                    radius = minOf(ccw, cch) * 0.7f,
+                                    center = Offset(cellX(c) + ccw / 2f, cellY(r) + cch / 2f)
                                 )
                             }
 
                             selectedStart?.let { (c, r) ->
-                                val cx = c * cellW + cellW / 2f
-                                val cy = r * cellH + cellH / 2f
-                                val radius = minOf(cellW, cellH) * 2.5f
+                                val cx = cellX(c) + ccw / 2f
+                                val cy = cellY(r) + cch / 2f
+                                val radius = minOf(ccw, cch) * 2.5f
                                 drawCircle(Color(0xFF00AA55).copy(alpha = 0.3f), radius * 2f, Offset(cx, cy))
                                 drawCircle(Color(0xFF00AA55), radius, Offset(cx, cy))
                                 drawCircle(Color.White, radius * 0.5f, Offset(cx, cy))
                             }
 
                             selectedEnd?.let { (c, r) ->
-                                val cx = c * cellW + cellW / 2f
-                                val cy = r * cellH + cellH / 2f
-                                val radius = minOf(cellW, cellH) * 2.5f
+                                val cx = cellX(c) + ccw / 2f
+                                val cy = cellY(r) + cch / 2f
+                                val radius = minOf(ccw, cch) * 2.5f
                                 drawCircle(Color(0xFFCC3333).copy(alpha = 0.3f), radius * 2f, Offset(cx, cy))
                                 drawCircle(Color(0xFFCC3333), radius, Offset(cx, cy))
                                 drawCircle(Color.White, radius * 0.5f, Offset(cx, cy))
