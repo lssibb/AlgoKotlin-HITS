@@ -1326,11 +1326,214 @@ fun KMeansScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
     }
 }
 
+@SuppressLint("UnusedBoxWithConstraintsScope")
 @Composable
 fun CoworkingScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
-    Column(modifier = modifier.fillMaxSize().padding(16.dp)) {
-        Button(onClick = onBack) { Text("Назад") }
-        Text("Муравьиный алгоритм", fontSize = 24.sp)
+    val context = LocalContext.current
+
+    val mapInfo = remember {
+        val lines = context.assets.open("tsu_campus_matrix.txt").bufferedReader().use { it.readLines() }
+        val grid = lines.map { line -> line.map { it.toString().toIntOrNull() ?: 0 }.toIntArray() }.toTypedArray()
+        val landmarks = mutableListOf<Landmark>()
+        for (r in lines.indices) for (c in lines[r].indices) {
+            if (lines[r][c] == '6') {
+                val comfort = ((r * 31 + c) % 10) / 10.0 + 0.5
+                landmarks.add(Landmark(r, c, comfort))
+            }
+        }
+        Triple(grid, lines, landmarks)
+    }
+    val grid = mapInfo.first
+    val allLandmarks = mapInfo.third
+
+    var selectedIdx by remember { mutableStateOf(setOf<Int>()) }
+    var antResult by remember { mutableStateOf<AntResult?>(null) }
+    var routePaths by remember { mutableStateOf<List<Pair<Int, Int>>>(emptyList()) }
+
+    var scale by remember { mutableFloatStateOf(3f) }
+    var offsetX by remember { mutableFloatStateOf(0f) }
+    var offsetY by remember { mutableFloatStateOf(0f) }
+
+    LaunchedEffect(antResult) {
+        val res = antResult
+        if (res != null && res.route.size >= 2) {
+            val stops = res.route.map { allLandmarks[selectedIdx.toList()[it]] }
+            val paths = mutableListOf<Pair<Int, Int>>()
+            for (i in 0 until stops.size - 1) {
+                val seg = astar(grid, stops[i].row, stops[i].col, stops[i + 1].row, stops[i + 1].col)
+                if (seg != null) paths.addAll(seg)
+            }
+            routePaths = paths
+        } else {
+            routePaths = emptyList()
+        }
+    }
+
+    Column(modifier = modifier.fillMaxSize().background(Color(0xFFF0F2F5))) {
+        Row(
+            modifier = Modifier.fillMaxWidth().background(Color.White).padding(horizontal = 20.dp, vertical = 14.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            IconButton(onClick = onBack, modifier = Modifier.size(40.dp).background(TsuBluePrimary, RoundedCornerShape(12.dp))) {
+                Text("←", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+            }
+            Spacer(Modifier.width(14.dp))
+            Column {
+                Text("Муравьиный алгоритм", fontSize = 18.sp, fontWeight = FontWeight.ExtraBold, color = Color(0xFF1A1A2E))
+                Text("Обход достопримечательностей", fontSize = 12.sp, color = Color.Gray)
+            }
+            Spacer(Modifier.weight(1f))
+            if (selectedIdx.isNotEmpty() || antResult != null) {
+                Surface(
+                    shape = RoundedCornerShape(10.dp),
+                    color = Color(0xFFFFEEEE),
+                    modifier = Modifier.clickable {
+                        selectedIdx = emptySet(); antResult = null; routePaths = emptyList()
+                    }
+                ) {
+                    Text(
+                        "Сброс", fontSize = 13.sp, fontWeight = FontWeight.SemiBold,
+                        color = Color(0xFFCC3333),
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
+                    )
+                }
+            }
+        }
+
+        BoxWithConstraints(
+            modifier = Modifier.fillMaxWidth().weight(1f)
+                .padding(horizontal = 16.dp, vertical = 8.dp)
+                .shadow(8.dp, RoundedCornerShape(24.dp))
+                .clip(RoundedCornerShape(24.dp)).background(Color.White)
+        ) {
+            val bW = constraints.maxWidth.toFloat()
+            val bH = constraints.maxHeight.toFloat()
+            val gridRows = grid.size; val gridCols = grid[0].size
+            val fit = minOf(bW / gridCols, bH / gridRows)
+            val mW = fit * gridCols; val mH = fit * gridRows
+            val cellW = mW / gridCols; val cellH = mH / gridRows
+            val density = androidx.compose.ui.platform.LocalDensity.current
+            val mapWDp = with(density) { mW.toDp() }
+            val mapHDp = with(density) { mH.toDp() }
+            val mapStartXDp = with(density) { ((bW - mW) / 2f).toDp() }
+            val mapStartYDp = with(density) { ((bH - mH) / 2f).toDp() }
+
+            Box(
+                modifier = Modifier.fillMaxSize()
+                    .pointerInput(Unit) {
+                        detectTransformGestures { _, pan, zoom, _ ->
+                            val ns = (scale * zoom).coerceIn(1f, 8f); scale = ns
+                            val mx = ((mW * ns) - bW).coerceAtLeast(0f) / 2f
+                            val my = ((mH * ns) - bH).coerceAtLeast(0f) / 2f
+                            offsetX = (offsetX + pan.x).coerceIn(-mx, mx)
+                            offsetY = (offsetY + pan.y).coerceIn(-my, my)
+                        }
+                    }
+                    .pointerInput(Unit) {
+                        detectTapGestures { tap ->
+                            val pivX = bW / 2f; val pivY = bH / 2f
+                            val wx = (tap.x - pivX - offsetX) / scale + pivX - (bW - mW) / 2f
+                            val wy = (tap.y - pivY - offsetY) / scale + pivY - (bH - mH) / 2f
+                            val col = (wx / cellW).toInt(); val row = (wy / cellH).toInt()
+                            val hit = allLandmarks.indexOfFirst { it.row == row && it.col == col }
+                            if (hit >= 0) {
+                                selectedIdx = if (hit in selectedIdx) selectedIdx - hit else selectedIdx + hit
+                                antResult = null; routePaths = emptyList()
+                            }
+                        }
+                    }
+            ) {
+                Box(modifier = Modifier.fillMaxSize().graphicsLayer(scaleX = scale, scaleY = scale, translationX = offsetX, translationY = offsetY)) {
+                    Box(modifier = Modifier.offset(x = mapStartXDp, y = mapStartYDp).size(width = mapWDp, height = mapHDp)) {
+                        Canvas(modifier = Modifier.fillMaxSize()) {
+                            for (row in 0 until gridRows) {
+                                for (col in 0 until gridCols) {
+                                    val color = when (grid[row][col]) {
+                                        0 -> Color(0xFF808080)
+                                        8 -> Color(0xFF0011FF).copy(alpha = 0.3f)
+                                        else -> Color(0xFFB0BEC5)
+                                    }
+                                    drawRect(color, topLeft = Offset(col * cellW, row * cellH), size = Size(cellW, cellH))
+                                }
+                            }
+
+                            routePaths.forEach { (r, c) ->
+                                drawRect(Color(0xCCFF6D00), topLeft = Offset(c * cellW, r * cellH), size = Size(cellW, cellH))
+                            }
+
+                            allLandmarks.forEachIndexed { i, lm ->
+                                val center = Offset(lm.col * cellW + cellW / 2f, lm.row * cellH + cellH / 2f)
+                                val isSel = i in selectedIdx
+                                val rad = minOf(cellW, cellH) * if (isSel) 2.8f else 2f
+                                drawCircle(Color.White, rad * 1.3f, center)
+                                drawCircle(if (isSel) Color(0xFF900B09) else Color(0xFF78909C), rad, center)
+                                drawCircle(Color.White, rad * 0.3f, center)
+                            }
+
+                            val res = antResult
+                            if (res != null && res.route.size >= 2) {
+                                val selList = selectedIdx.toList()
+                                res.route.forEachIndexed { ord, idxInSel ->
+                                    val lm = allLandmarks[selList[idxInSel]]
+                                    val center = Offset(lm.col * cellW + cellW / 2f, lm.row * cellH + cellH / 2f)
+                                    val rad = minOf(cellW, cellH) * 3.5f
+                                    drawCircle(Color.White, rad, center)
+                                    val color = if (ord == 0) Color(0xFF00C853)
+                                    else if (ord == res.route.size - 1) Color(0xFFE53935)
+                                    else Color(0xFF900B09)
+                                    drawCircle(color, rad * 0.85f, center)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        Surface(
+            modifier = Modifier.fillMaxWidth(), color = Color.White, shadowElevation = 8.dp,
+            shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp)
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                if (selectedIdx.isEmpty()) {
+                    Text("Тапните на бордовые точки (достопримечательности), чтобы выбрать маршрут",
+                        fontSize = 13.sp, color = Color.Gray)
+                } else {
+                    Text("Выбрано локаций: ${selectedIdx.size}", fontSize = 14.sp, color = Color(0xFF900B09), fontWeight = FontWeight.Medium)
+                    if (antResult == null) {
+                        if (selectedIdx.size >= 2) {
+                            Spacer(Modifier.height(8.dp))
+                            Button(
+                                onClick = {
+                                    val chosen = selectedIdx.toList().map { allLandmarks[it] }
+                                    antResult = antColonyTSP(chosen, grid)
+                                },
+                                modifier = Modifier.fillMaxWidth().height(48.dp),
+                                shape = RoundedCornerShape(14.dp),
+                                colors = ButtonDefaults.buttonColors(containerColor = TsuBluePrimary)
+                            ) { Text("Построить маршрут (Муравьи)", fontWeight = FontWeight.SemiBold) }
+                        } else {
+                            Text("Выберите минимум 2 локации", fontSize = 12.sp, color = Color.Red)
+                        }
+                    } else {
+                        val res = antResult!!
+                        if (res.distance > 0) {
+                            Text("Маршрут найден!", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = TsuBluePrimary)
+                            Text("Дистанция: ${res.distance} шагов", fontSize = 13.sp, color = Color(0xFF666666))
+                            Text("Итераций: ${res.iterations}", fontSize = 12.sp, color = Color.Gray)
+                            val selList = selectedIdx.toList()
+                            res.route.forEachIndexed { ord, idxInSel ->
+                                val lm = allLandmarks[selList[idxInSel]]
+                                Text("${ord + 1}. [${lm.row}, ${lm.col}]  комфорт: ${"%.2f".format(lm.comfort)}",
+                                    fontSize = 12.sp, color = Color(0xFF900B09))
+                            }
+                        } else {
+                            Text("Маршрут не найден (точки недостижимы)", fontSize = 14.sp, color = Color.Red)
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 
