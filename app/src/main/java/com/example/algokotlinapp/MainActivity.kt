@@ -34,7 +34,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.algokotlinapp.algorithms.astar
+import com.example.algokotlinapp.algorithms.*
 import com.example.algokotlinapp.ui.theme.*
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
@@ -42,9 +42,15 @@ import java.nio.ByteOrder
 data class LocationInfo(val name: String, val type: String, val description: String)
 
 val CampusDictionary = mapOf(
-    Pair(50, 40) to LocationInfo("Библиотека ТГУ", "Коворкинг", "Отличное место для учебы. Есть розетки и Wi-Fi."),
-    Pair(35, 60) to LocationInfo("Главный Корпус (ГК)", "Учебный корпус", "Здесь находится приемная комиссия и актовый зал."),
-    Pair(60, 50) to LocationInfo("Остановка 'Университет'", "Транспорт", "Можно уехать в любую точку города.")
+    Pair(57, 73) to LocationInfo("Библиотека ТГУ", "Коворкинг", "Отличное место для учебы. Есть розетки и Wi-Fi."),
+    Pair(88, 72) to LocationInfo("Главный Корпус (ГК)", "Учебный корпус", "Здесь находится приемная комиссия и актовый зал."),
+    Pair(32, 14) to LocationInfo("Остановка 'Университет'", "Транспорт", "Можно уехать в любую точку города."),
+    Pair(98, 72) to LocationInfo("Центр кампуса", "Ориентир", "Центральная точка университетской рощи."),
+    Pair(20, 41) to LocationInfo("Остановка 'ТГУ'", "Транспорт", "Остановка на ул. Ленина."),
+    Pair(47, 64) to LocationInfo("Вход в ФТФ", "Вход", "Физико-технический факультет."),
+    Pair(29, 48) to LocationInfo("Вход в ГК", "Вход", "Главный корпус ТГУ."),
+    Pair(71, 55) to LocationInfo("Столовая", "Еда", "Столовая для студентов и сотрудников."),
+    Pair(15, 15) to LocationInfo("Продуктовый магазин", "Магазин", "Ближайший магазин продуктов.")
 )
 
 class MainActivity : ComponentActivity() {
@@ -75,6 +81,7 @@ class MainActivity : ComponentActivity() {
                             "Food"      -> FoodScreen(Modifier.padding(innerPadding)) { currentScreen = "MainMenu" }
                             "Coworking" -> CoworkingScreen(Modifier.padding(innerPadding)) { currentScreen = "MainMenu" }
                             "NeuralNet" -> NeuralNetScreen(Modifier.padding(innerPadding)) { currentScreen = "MainMenu" }
+                            "KMeans"    -> KMeansScreen(Modifier.padding(innerPadding)) { currentScreen = "MainMenu" }
                         }
                     }
                 }
@@ -95,6 +102,7 @@ fun MainMenuScreen(modifier: Modifier = Modifier, onNavigate: (String) -> Unit) 
         Button(onClick = { onNavigate("Map") }, modifier = Modifier.fillMaxWidth(0.8f).padding(4.dp)) { Text("Карта кампуса", fontSize = 18.sp) }
         Button(onClick = { onNavigate("Route") }, modifier = Modifier.fillMaxWidth(0.8f).padding(4.dp)) { Text("Навигация (A*)", fontSize = 18.sp) }
         Button(onClick = { onNavigate("Food") }, modifier = Modifier.fillMaxWidth(0.8f).padding(4.dp)) { Text("Где поесть? (Генетика)", fontSize = 18.sp) }
+        Button(onClick = { onNavigate("KMeans") }, modifier = Modifier.fillMaxWidth(0.8f).padding(4.dp)) { Text("Кластеризация (K-Means)", fontSize = 18.sp) }
         Button(onClick = { onNavigate("Coworking") }, modifier = Modifier.fillMaxWidth(0.8f).padding(4.dp)) { Text("Коворкинги (Муравьи)", fontSize = 18.sp) }
         Button(onClick = { onNavigate("NeuralNet") }, modifier = Modifier.fillMaxWidth(0.8f).padding(4.dp)) { Text("Оценка: Нейросеть", fontSize = 18.sp) }
     }
@@ -102,8 +110,9 @@ fun MainMenuScreen(modifier: Modifier = Modifier, onNavigate: (String) -> Unit) 
 
 @Composable
 fun CampusMapScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
+    val context = LocalContext.current
     val mapData = remember {
-        val lines = CAMPUS_MAP_DATA.trim().lines()
+        val lines = context.assets.open("tsu_campus_matrix.txt").bufferedReader().use { it.readLines() }
         val gridRows = lines.size
         val gridCols = lines.maxOfOrNull { it.length } ?: 0
         val tiles = mutableListOf<Triple<Int, Int, Color>>()
@@ -131,11 +140,24 @@ fun CampusMapScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
     val activeTiles = mapData.first.third
     val rawLines = mapData.second
 
-    var scale by remember { mutableFloatStateOf(1f) }
+    val grid = remember {
+        rawLines.map { line -> line.map { it.toString().toIntOrNull() ?: 0 }.toIntArray() }.toTypedArray()
+    }
+
+    var scale by remember { mutableFloatStateOf(3f) }
     var offsetX by remember { mutableFloatStateOf(0f) }
     var offsetY by remember { mutableFloatStateOf(0f) }
     var selectedLocation by remember { mutableStateOf<Pair<Int, Int>?>(null) }
     var displayedLocation by remember { mutableStateOf<Pair<Int, Int>?>(null) }
+
+    var routeStart by remember { mutableStateOf<Pair<Int, Int>?>(null) }
+    var routeEnd by remember { mutableStateOf<Pair<Int, Int>?>(null) }
+
+    val routePath = remember(routeStart, routeEnd) {
+        if (routeStart != null && routeEnd != null)
+            astar(grid, routeStart!!.first, routeStart!!.second, routeEnd!!.first, routeEnd!!.second)
+        else null
+    }
 
     LaunchedEffect(selectedLocation) {
         if (selectedLocation != null) displayedLocation = selectedLocation
@@ -168,6 +190,14 @@ fun CampusMapScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
                 Text("ТГУ · Томск", fontSize = 12.sp, color = Color.Gray)
             }
             Spacer(Modifier.weight(1f))
+            if (routeStart != null || routeEnd != null) {
+                Button(
+                    onClick = { routeStart = null; routeEnd = null },
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEEF3FF), contentColor = TsuBluePrimary)
+                ) { Text("Сброс", fontWeight = FontWeight.SemiBold, fontSize = 12.sp) }
+                Spacer(Modifier.width(8.dp))
+            }
             Surface(shape = RoundedCornerShape(10.dp), color = Color(0xFFEEF3FF)) {
                 Icon(
                     Icons.Default.LocationOn,
@@ -208,8 +238,8 @@ fun CampusMapScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
                         detectTransformGestures { _, pan, zoom, _ ->
                             val newScale = (scale * zoom).coerceIn(1f, 8f)
                             scale = newScale
-                            val maxOffsetX = ((mW * scale) - bW).coerceAtLeast(0f) / 2f
-                            val maxOffsetY = ((mH * scale) - bH).coerceAtLeast(0f) / 2f
+                            val maxOffsetX = ((mW * newScale) - bW).coerceAtLeast(0f) / 2f
+                            val maxOffsetY = ((mH * newScale) - bH).coerceAtLeast(0f) / 2f
                             offsetX = (offsetX + pan.x).coerceIn(-maxOffsetX, maxOffsetX)
                             offsetY = (offsetY + pan.y).coerceIn(-maxOffsetY, maxOffsetY)
                         }
@@ -276,6 +306,30 @@ fun CampusMapScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
                                     drawCircle(Color.White, radius * 0.38f, center)
                                 }
                             }
+
+                            routePath?.forEach { (r, c) ->
+                                drawRoundRect(
+                                    Color(0xCCFF6D00),
+                                    topLeft = Offset(c * cellW, r * cellH),
+                                    size = Size(cellW, cellH),
+                                    cornerRadius = CornerRadius(1f, 1f)
+                                )
+                            }
+
+                            routeStart?.let { (r, c) ->
+                                val center = Offset(c * cellW + cellW / 2f, r * cellH + cellH / 2f)
+                                val radius = minOf(cellW, cellH) * 2.5f
+                                drawCircle(Color.White, radius * 1.3f, center)
+                                drawCircle(Color(0xFF00C853), radius, center)
+                                drawCircle(Color.White, radius * 0.35f, center)
+                            }
+                            routeEnd?.let { (r, c) ->
+                                val center = Offset(c * cellW + cellW / 2f, r * cellH + cellH / 2f)
+                                val radius = minOf(cellW, cellH) * 2.5f
+                                drawCircle(Color.White, radius * 1.3f, center)
+                                drawCircle(Color(0xFFE53935), radius, center)
+                                drawCircle(Color.White, radius * 0.35f, center)
+                            }
                         }
                     }
                 }
@@ -293,6 +347,36 @@ fun CampusMapScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
                         fontWeight = FontWeight.Bold,
                         color = TsuBluePrimary,
                         modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
+                    )
+                }
+            }
+        }
+
+        if (selectedLocation == null && (routeStart != null || routeEnd != null)) {
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                color = Color.White,
+                shadowElevation = 8.dp,
+                shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp)
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    if (routeStart != null) Text(
+                        "Откуда: [${routeStart!!.second}, ${routeStart!!.first}]",
+                        fontSize = 14.sp, color = Color(0xFF00C853), fontWeight = FontWeight.Medium
+                    )
+                    if (routeEnd != null) Text(
+                        "Куда: [${routeEnd!!.second}, ${routeEnd!!.first}]",
+                        fontSize = 14.sp, color = Color(0xFFE53935), fontWeight = FontWeight.Medium
+                    )
+                    if (routePath != null) Text(
+                        "Маршрут найден! ${routePath!!.size} шагов",
+                        fontSize = 14.sp, fontWeight = FontWeight.Bold, color = TsuBluePrimary
+                    ) else if (routeStart != null && routeEnd != null) Text(
+                        "Маршрут не найден",
+                        fontSize = 14.sp, color = Color.Red
+                    ) else Text(
+                        if (routeStart == null) "Выберите начальную точку" else "Выберите конечную точку",
+                        fontSize = 13.sp, color = Color.Gray
                     )
                 }
             }
@@ -350,13 +434,19 @@ fun CampusMapScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
                         Spacer(Modifier.height(20.dp))
                         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                             Button(
-                                onClick = {},
+                                onClick = {
+                                    routeEnd = Pair(loc.second, loc.first)
+                                    selectedLocation = null
+                                },
                                 modifier = Modifier.weight(1f).height(48.dp),
                                 shape = RoundedCornerShape(14.dp),
                                 colors = ButtonDefaults.buttonColors(containerColor = TsuBluePrimary)
                             ) { Text("Маршрут сюда", fontWeight = FontWeight.SemiBold) }
                             OutlinedButton(
-                                onClick = {},
+                                onClick = {
+                                    routeStart = Pair(loc.second, loc.first)
+                                    selectedLocation = null
+                                },
                                 modifier = Modifier.weight(1f).height(48.dp),
                                 shape = RoundedCornerShape(14.dp),
                                 border = BorderStroke(1.5.dp, TsuBluePrimary)
@@ -372,11 +462,11 @@ fun CampusMapScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
 fun RouteScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
     val context = LocalContext.current
     val grid = remember {
-        val reader = context.assets.open("tsu_campus_matrix.txt").bufferedReader()
-        val lines = reader.readLines()
-        lines.map { line ->
-            line.map { it.toString().toInt() }.toIntArray()
-        }.toTypedArray()
+        context.assets.open("tsu_campus_matrix.txt").bufferedReader().use { reader ->
+            reader.readLines().map { line ->
+                line.map { it.toString().toInt() }.toIntArray()
+            }.toTypedArray()
+        }
     }
 
     var start by remember { mutableStateOf<Pair<Int, Int>?>(null) }
@@ -388,98 +478,599 @@ fun RouteScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
         else null
     }
 
-    Box(modifier = modifier.fillMaxSize()) {
-        val cellSizeDp = 8.dp
-        Box(
+    var scale by remember { mutableFloatStateOf(3f) }
+    var offsetX by remember { mutableFloatStateOf(0f) }
+    var offsetY by remember { mutableFloatStateOf(0f) }
+
+    Column(modifier = modifier.fillMaxSize().background(Color(0xFFF0F2F5))) {
+        Row(
             modifier = Modifier
-                .fillMaxSize()
-                .horizontalScroll(rememberScrollState())
-                .verticalScroll(rememberScrollState())
+                .fillMaxWidth()
+                .background(Color.White)
+                .padding(horizontal = 20.dp, vertical = 14.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-        Canvas(
+            IconButton(
+                onClick = onBack,
+                modifier = Modifier
+                    .size(40.dp)
+                    .background(TsuBluePrimary, RoundedCornerShape(12.dp))
+            ) {
+                Text("←", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+            }
+            Spacer(Modifier.width(14.dp))
+            Text("Навигация (A*)", fontSize = 20.sp, fontWeight = FontWeight.ExtraBold, color = Color(0xFF1A1A2E))
+            Spacer(Modifier.weight(1f))
+            Button(
+                onClick = { start = null; end = null; scale = 3f; offsetX = 0f; offsetY = 0f },
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEEF3FF), contentColor = TsuBluePrimary)
+            ) { Text("Сбросить", fontWeight = FontWeight.SemiBold) }
+        }
+
+        BoxWithConstraints(
             modifier = Modifier
-                .size(width = cellSizeDp * grid[0].size, height = cellSizeDp * grid.size)
-                .pointerInput(Unit) {
-                    detectTapGestures { offset ->
-                        val cellWidth = size.width.toFloat() / grid[0].size
-                        val cellHeight = size.height.toFloat() / grid.size
-                        val col = (offset.x / cellWidth).toInt()
-                        val row = (offset.y / cellHeight).toInt()
-                        if (row in grid.indices && col in grid[0].indices && grid[row][col] != 0) {
-                            if (start == null) {
-                                start = Pair(row, col)
-                            } else if (end == null) {
-                                end = Pair(row, col)
+                .fillMaxWidth()
+                .weight(1f)
+                .padding(horizontal = 16.dp, vertical = 12.dp)
+                .shadow(8.dp, RoundedCornerShape(24.dp))
+                .clip(RoundedCornerShape(24.dp))
+                .background(Color.White)
+        ) {
+            val bW = constraints.maxWidth.toFloat()
+            val bH = constraints.maxHeight.toFloat()
+            val gridRows = grid.size
+            val gridCols = grid[0].size
+            val fit = minOf(bW / gridCols, bH / gridRows)
+            val mW = fit * gridCols
+            val mH = fit * gridRows
+            val cellW = mW / gridCols
+            val cellH = mH / gridRows
+
+            val density = androidx.compose.ui.platform.LocalDensity.current
+            val mapWDp = with(density) { mW.toDp() }
+            val mapHDp = with(density) { mH.toDp() }
+            val mapStartXDp = with(density) { ((bW - mW) / 2f).toDp() }
+            val mapStartYDp = with(density) { ((bH - mH) / 2f).toDp() }
+
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .pointerInput(Unit) {
+                        detectTransformGestures { _, pan, zoom, _ ->
+                            val newScale = (scale * zoom).coerceIn(1f, 8f)
+                            scale = newScale
+                            val maxOffsetX = ((mW * newScale) - bW).coerceAtLeast(0f) / 2f
+                            val maxOffsetY = ((mH * newScale) - bH).coerceAtLeast(0f) / 2f
+                            offsetX = (offsetX + pan.x).coerceIn(-maxOffsetX, maxOffsetX)
+                            offsetY = (offsetY + pan.y).coerceIn(-maxOffsetY, maxOffsetY)
+                        }
+                    }
+                    .pointerInput(Unit) {
+                        detectTapGestures { tap ->
+                            val pivX = bW / 2f
+                            val pivY = bH / 2f
+                            val worldX = (tap.x - pivX - offsetX) / scale + pivX - (bW - mW) / 2f
+                            val worldY = (tap.y - pivY - offsetY) / scale + pivY - (bH - mH) / 2f
+                            val col = (worldX / cellW).toInt()
+                            val row = (worldY / cellH).toInt()
+                            if (row in grid.indices && col in grid[0].indices && grid[row][col] != 0) {
+                                if (start == null) {
+                                    start = Pair(row, col)
+                                } else if (end == null) {
+                                    end = Pair(row, col)
+                                }
+                            }
+                        }
+                    }
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .graphicsLayer(
+                            scaleX = scale,
+                            scaleY = scale,
+                            translationX = offsetX,
+                            translationY = offsetY
+                        )
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .offset(x = mapStartXDp, y = mapStartYDp)
+                            .size(width = mapWDp, height = mapHDp)
+                    ) {
+                        Canvas(modifier = Modifier.fillMaxSize()) {
+                            for (row in 0 until gridRows) {
+                                for (col in 0 until gridCols) {
+                                    val color = when (grid[row][col]) {
+                                        0 -> Color(0xFF808080)
+                                        1 -> Color(0xFFFFFF00)
+                                        2 -> Color(0xFFFF00E6)
+                                        3 -> Color(0xFF00EEFF)
+                                        4 -> Color(0xFF1EFF00)
+                                        5 -> Color(0xFFFF0400)
+                                        6 -> Color(0xFF900B09)
+                                        7 -> Color(0xFF532C00)
+                                        8 -> Color(0xFF0011FF)
+                                        else -> Color.LightGray
+                                    }
+                                    drawRect(
+                                        color = color,
+                                        topLeft = Offset(col * cellW, row * cellH),
+                                        size = Size(cellW, cellH)
+                                    )
+                                }
+                            }
+                            start?.let { (r, c) ->
+                                drawCircle(
+                                    color = Color.Cyan,
+                                    radius = cellW * 2,
+                                    center = Offset(c * cellW + cellW / 2, r * cellH + cellH / 2)
+                                )
+                            }
+                            end?.let { (r, c) ->
+                                drawCircle(
+                                    color = Color.Red,
+                                    radius = cellW * 2,
+                                    center = Offset(c * cellW + cellW / 2, r * cellH + cellH / 2)
+                                )
+                            }
+                            path?.forEach { (r, c) ->
+                                drawRect(
+                                    color = Color.White,
+                                    topLeft = Offset(c * cellW, r * cellH),
+                                    size = Size(cellW, cellH)
+                                )
                             }
                         }
                     }
                 }
+            }
 
-            ) {
-                val cellWidth = size.width / grid[0].size
-                val cellHeight = size.height / grid.size
-
-                for (row in 0 until grid.size) {
-                    for (col in 0 until grid[0].size) {
-                        val color = when (grid[row][col]) {
-                            0 -> Color(0xFF808080)
-                            1 -> Color(0xFFFFFF00)
-                            2 -> Color(0xFFFF00E6)
-                            3 -> Color(0xFF00EEFF)
-                            4 -> Color(0xFF1EFF00)
-                            5 -> Color(0xFFFF0400)
-                            6 -> Color(0xFF900B09)
-                            7 -> Color(0xFF532C00)
-                            8 -> Color(0xFF0011FF)
-                            else -> Color.LightGray
-                        }
-                        drawRect(
-                            color = color,
-                            topLeft = Offset(col * cellWidth, row * cellHeight),
-                            size = Size(cellWidth, cellHeight)
-                        )
-                    }
-                }
-                start?.let { (r, c) ->
-                    drawCircle(
-                        color = Color.Cyan,
-                        radius = cellWidth * 2,
-                        center = Offset(c * cellWidth + cellWidth / 2, r * cellHeight + cellHeight / 2)
-                    )
-                }
-                end?.let { (r, c) ->
-                    drawCircle(
-                        color = Color.Red,
-                        radius = cellWidth * 2,
-                        center = Offset(c * cellWidth + cellWidth / 2, r * cellHeight + cellHeight / 2)
-                    )
-                }
-                path?.forEach { (r, c) ->
-                    drawRect(
-                        color = Color.White,
-                        topLeft = Offset(c * cellWidth, r * cellHeight),
-                        size = Size(cellWidth, cellHeight)
+            Box(modifier = Modifier.align(Alignment.BottomEnd).padding(12.dp)) {
+                Surface(
+                    shape = RoundedCornerShape(10.dp),
+                    color = Color.White.copy(alpha = 0.92f),
+                    shadowElevation = 4.dp
+                ) {
+                    Text(
+                        "×${"%.1f".format(scale)}",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = TsuBluePrimary,
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
                     )
                 }
             }
         }
-        Column(
-            modifier = Modifier
-                .align(Alignment.TopStart)
-                .padding(16.dp)
-        ) {
-            Button(onClick = onBack) { Text("<- Назад") }
-            Spacer(modifier = Modifier.height(8.dp))
-            Button(onClick = { start = null; end = null }) { Text("Сбросить") }
+
+        if (start != null || end != null || path != null) {
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                color = Color.White,
+                shadowElevation = 8.dp,
+                shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp)
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    if (start != null) Text("Старт: [${start!!.second}, ${start!!.first}]", fontSize = 14.sp, color = Color(0xFF00897B))
+                    if (end != null) Text("Финиш: [${end!!.second}, ${end!!.first}]", fontSize = 14.sp, color = Color(0xFFE53935))
+                    if (path != null) Text("Маршрут найден! ${path!!.size} шагов", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = TsuBluePrimary)
+                    else if (start != null && end != null) Text("Маршрут не найден", fontSize = 14.sp, color = Color.Red)
+                    else if (start != null && end == null) Text("Выберите конечную точку", fontSize = 13.sp, color = Color.Gray)
+                }
+            }
         }
     }
 }
 
 @Composable
 fun FoodScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
-    Column(modifier = modifier.fillMaxSize().padding(16.dp)) {
-        Button(onClick = onBack) { Text("Назад") }
-        Text("Генетический алгоритм", fontSize = 24.sp)
+    val context = LocalContext.current
+    val grid = remember {
+        context.assets.open("tsu_campus_matrix.txt").bufferedReader().use { reader ->
+            reader.readLines().map { line -> line.map { it.toString().toIntOrNull() ?: 0 }.toIntArray() }.toTypedArray()
+        }
+    }
+    val places = FOOD_PLACES
+    val foodTypes = listOf("coffee", "pancakes", "full_meal", "snack")
+
+    var selectedFoods by remember { mutableStateOf(setOf("coffee", "full_meal")) }
+    var startPoint by remember { mutableStateOf<Pair<Int, Int>?>(null) }
+    var gaResult by remember { mutableStateOf<GAResult?>(null) }
+    var routePaths by remember { mutableStateOf<List<Pair<Int, Int>>>(emptyList()) }
+    var isRunning by remember { mutableStateOf(false) }
+
+    var scale by remember { mutableFloatStateOf(3f) }
+    var offsetX by remember { mutableFloatStateOf(0f) }
+    var offsetY by remember { mutableFloatStateOf(0f) }
+
+    val placeColors = listOf(
+        Color(0xFFE53935), Color(0xFF1E88E5), Color(0xFF43A047),
+        Color(0xFFFF9800), Color(0xFF8E24AA), Color(0xFF00ACC1)
+    )
+
+    LaunchedEffect(gaResult) {
+        if (gaResult != null && gaResult!!.route.isNotEmpty() && startPoint != null) {
+            val stops = listOf(startPoint!!) + gaResult!!.route.map { places[it].row to places[it].col }
+            val paths = mutableListOf<Pair<Int, Int>>()
+            for (i in 0 until stops.size - 1) {
+                val seg = astar(grid, stops[i].first, stops[i].second, stops[i + 1].first, stops[i + 1].second)
+                if (seg != null) paths.addAll(seg)
+            }
+            routePaths = paths
+        } else {
+            routePaths = emptyList()
+        }
+    }
+
+    Column(modifier = modifier.fillMaxSize().background(Color(0xFFF0F2F5))) {
+        Row(
+            modifier = Modifier.fillMaxWidth().background(Color.White).padding(horizontal = 20.dp, vertical = 14.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            IconButton(onClick = onBack, modifier = Modifier.size(40.dp).background(TsuBluePrimary, RoundedCornerShape(12.dp))) {
+                Text("←", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+            }
+            Spacer(Modifier.width(14.dp))
+            Text("Где поесть? (ГА)", fontSize = 20.sp, fontWeight = FontWeight.ExtraBold, color = Color(0xFF1A1A2E))
+            Spacer(Modifier.weight(1f))
+            if (gaResult != null) {
+                Button(
+                    onClick = { gaResult = null; routePaths = emptyList(); startPoint = null },
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEEF3FF), contentColor = TsuBluePrimary)
+                ) { Text("Сброс", fontWeight = FontWeight.SemiBold, fontSize = 12.sp) }
+            }
+        }
+
+        Row(
+            modifier = Modifier.fillMaxWidth().background(Color.White).padding(horizontal = 16.dp, vertical = 8.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            foodTypes.forEach { food ->
+                val label = FOOD_LABELS[food] ?: food
+                val isSel = food in selectedFoods
+                Surface(
+                    shape = RoundedCornerShape(20.dp),
+                    color = if (isSel) TsuBluePrimary else Color(0xFFEEF3FF),
+                    modifier = Modifier.height(36.dp).clickable {
+                        selectedFoods = if (isSel) selectedFoods - food else selectedFoods + food
+                        gaResult = null; routePaths = emptyList()
+                    }
+                ) {
+                    Text(
+                        label, fontSize = 12.sp,
+                        color = if (isSel) Color.White else Color(0xFF666666),
+                        fontWeight = FontWeight.Medium,
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
+                    )
+                }
+            }
+        }
+
+        BoxWithConstraints(
+            modifier = Modifier.fillMaxWidth().weight(1f)
+                .padding(horizontal = 16.dp, vertical = 8.dp)
+                .shadow(8.dp, RoundedCornerShape(24.dp))
+                .clip(RoundedCornerShape(24.dp)).background(Color.White)
+        ) {
+            val bW = constraints.maxWidth.toFloat()
+            val bH = constraints.maxHeight.toFloat()
+            val gridRows = grid.size
+            val gridCols = grid[0].size
+            val fit = minOf(bW / gridCols, bH / gridRows)
+            val mW = fit * gridCols; val mH = fit * gridRows
+            val cellW = mW / gridCols; val cellH = mH / gridRows
+            val density = androidx.compose.ui.platform.LocalDensity.current
+            val mapWDp = with(density) { mW.toDp() }
+            val mapHDp = with(density) { mH.toDp() }
+            val mapStartXDp = with(density) { ((bW - mW) / 2f).toDp() }
+            val mapStartYDp = with(density) { ((bH - mH) / 2f).toDp() }
+
+            Box(
+                modifier = Modifier.fillMaxSize()
+                    .pointerInput(Unit) {
+                        detectTransformGestures { _, pan, zoom, _ ->
+                            val ns = (scale * zoom).coerceIn(1f, 8f); scale = ns
+                            val mx = ((mW * ns) - bW).coerceAtLeast(0f) / 2f
+                            val my = ((mH * ns) - bH).coerceAtLeast(0f) / 2f
+                            offsetX = (offsetX + pan.x).coerceIn(-mx, mx)
+                            offsetY = (offsetY + pan.y).coerceIn(-my, my)
+                        }
+                    }
+                    .pointerInput(Unit) {
+                        detectTapGestures { tap ->
+                            val pivX = bW / 2f; val pivY = bH / 2f
+                            val wx = (tap.x - pivX - offsetX) / scale + pivX - (bW - mW) / 2f
+                            val wy = (tap.y - pivY - offsetY) / scale + pivY - (bH - mH) / 2f
+                            val col = (wx / cellW).toInt(); val row = (wy / cellH).toInt()
+                            if (row in grid.indices && col in grid[0].indices && grid[row][col] != 0) {
+                                startPoint = row to col
+                                gaResult = null; routePaths = emptyList()
+                            }
+                        }
+                    }
+            ) {
+                Box(modifier = Modifier.fillMaxSize().graphicsLayer(scaleX = scale, scaleY = scale, translationX = offsetX, translationY = offsetY)) {
+                    Box(modifier = Modifier.offset(x = mapStartXDp, y = mapStartYDp).size(width = mapWDp, height = mapHDp)) {
+                        Canvas(modifier = Modifier.fillMaxSize()) {
+                            for (row in 0 until gridRows) {
+                                for (col in 0 until gridCols) {
+                                    val color = when (grid[row][col]) {
+                                        0 -> Color(0xFF808080); 8 -> Color(0xFF0011FF).copy(alpha = 0.3f)
+                                        else -> Color(0xFFB0BEC5)
+                                    }
+                                    drawRect(color, topLeft = Offset(col * cellW, row * cellH), size = Size(cellW, cellH))
+                                }
+                            }
+
+                            routePaths.forEach { (r, c) ->
+                                drawRect(Color(0xCCFF6D00), topLeft = Offset(c * cellW, r * cellH), size = Size(cellW, cellH))
+                            }
+
+                            places.forEachIndexed { i, place ->
+                                val center = Offset(place.col * cellW + cellW / 2f, place.row * cellH + cellH / 2f)
+                                val rad = minOf(cellW, cellH) * 2.5f
+                                val isOnRoute = gaResult?.route?.contains(i) == true
+                                drawCircle(Color.White, rad * 1.3f, center)
+                                drawCircle(if (isOnRoute) placeColors[i % placeColors.size] else Color(0xFF78909C), rad, center)
+                                drawCircle(Color.White, rad * 0.3f, center)
+                            }
+
+                            startPoint?.let { (r, c) ->
+                                val center = Offset(c * cellW + cellW / 2f, r * cellH + cellH / 2f)
+                                val rad = minOf(cellW, cellH) * 3f
+                                drawCircle(Color.White, rad * 1.3f, center)
+                                drawCircle(Color(0xFF00C853), rad, center)
+                                drawCircle(Color.White, rad * 0.3f, center)
+                            }
+
+                            gaResult?.route?.forEachIndexed { idx, placeIdx ->
+                                val p = places[placeIdx]
+                                val center = Offset(p.col * cellW + cellW / 2f, p.row * cellH + cellH / 2f)
+                                val rad = minOf(cellW, cellH) * 3.5f
+                                drawCircle(Color.White, rad, center)
+                                drawCircle(placeColors[placeIdx % placeColors.size], rad * 0.85f, center)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            color = Color.White, shadowElevation = 8.dp,
+            shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp)
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                if (startPoint == null) {
+                    Text("Тапните на карту, чтобы задать стартовую точку", fontSize = 13.sp, color = Color.Gray)
+                } else if (gaResult == null) {
+                    Text("Старт: [${startPoint!!.second}, ${startPoint!!.first}]", fontSize = 14.sp, color = Color(0xFF00C853))
+                    if (selectedFoods.isNotEmpty()) {
+                        Spacer(Modifier.height(8.dp))
+                        Button(
+                            onClick = {
+                                isRunning = true
+                                gaResult = foodGeneticAlgorithm(places, selectedFoods, startPoint!!.first, startPoint!!.second, grid)
+                                isRunning = false
+                            },
+                            modifier = Modifier.fillMaxWidth().height(48.dp),
+                            shape = RoundedCornerShape(14.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = TsuBluePrimary)
+                        ) { Text("Построить маршрут (ГА)", fontWeight = FontWeight.SemiBold) }
+                    } else {
+                        Text("Выберите хотя бы один тип еды", fontSize = 13.sp, color = Color.Red)
+                    }
+                } else {
+                    val res = gaResult!!
+                    if (res.distance > 0) {
+                        Text("Маршрут найден!", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = TsuBluePrimary)
+                        Text("Дистанция: ${res.distance} шагов (~${"%.0f".format(res.distance * 0.3)} м)", fontSize = 14.sp, color = Color(0xFF666666))
+                        Text("Поколений ГА: ${res.generations}, лучший фитнес: ${res.bestPerGeneration.lastOrNull()}", fontSize = 12.sp, color = Color.Gray)
+                        Spacer(Modifier.height(4.dp))
+                        res.route.forEachIndexed { idx, placeIdx ->
+                            val p = places[placeIdx]
+                            Text("${idx + 1}. ${p.name} (${p.menu.filter { it in selectedFoods }.joinToString { FOOD_LABELS[it] ?: it }})",
+                                fontSize = 13.sp, color = placeColors[placeIdx % placeColors.size], fontWeight = FontWeight.Medium)
+                        }
+                    } else {
+                        Text("Маршрут не найден", fontSize = 14.sp, color = Color.Red)
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun KMeansScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
+    val context = LocalContext.current
+
+    val mapInfo = remember {
+        val lines = context.assets.open("tsu_campus_matrix.txt").bufferedReader().use { it.readLines() }
+        val grid = lines.map { line -> line.map { it.toString().toIntOrNull() ?: 0 }.toIntArray() }.toTypedArray()
+        val foodPts = mutableListOf<Pair<Int, Int>>()
+        for (r in lines.indices) for (c in lines[r].indices) {
+            if (lines[r][c] == '4') foodPts.add(c to r)
+        }
+        grid to foodPts
+    }
+    val grid = mapInfo.first
+    val defaultPoints = mapInfo.second
+
+    var userPoints by remember { mutableStateOf(listOf<Pair<Int, Int>>()) }
+    var k by remember { mutableStateOf(3) }
+    var result by remember { mutableStateOf<KMeansResult?>(null) }
+
+    var scale by remember { mutableFloatStateOf(3f) }
+    var offsetX by remember { mutableFloatStateOf(0f) }
+    var offsetY by remember { mutableFloatStateOf(0f) }
+
+    val allPoints = defaultPoints + userPoints
+
+    val clusterColors = listOf(
+        Color(0xFFE53935), Color(0xFF1E88E5), Color(0xFF43A047),
+        Color(0xFFFF9800), Color(0xFF8E24AA), Color(0xFF00ACC1),
+        Color(0xFFD81B60), Color(0xFF6D4C41)
+    )
+
+    Column(modifier = modifier.fillMaxSize().background(Color(0xFFF0F2F5))) {
+        Row(
+            modifier = Modifier.fillMaxWidth().background(Color.White).padding(horizontal = 20.dp, vertical = 14.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            IconButton(onClick = onBack, modifier = Modifier.size(40.dp).background(TsuBluePrimary, RoundedCornerShape(12.dp))) {
+                Text("←", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+            }
+            Spacer(Modifier.width(14.dp))
+            Text("Кластеризация (K-Means)", fontSize = 18.sp, fontWeight = FontWeight.ExtraBold, color = Color(0xFF1A1A2E))
+        }
+
+        Row(
+            modifier = Modifier.fillMaxWidth().background(Color.White).padding(horizontal = 16.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Text("K:", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+            Button(
+                onClick = { if (k > 2) { k--; result = null } },
+                modifier = Modifier.size(36.dp), contentPadding = PaddingValues(0.dp),
+                shape = RoundedCornerShape(10.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEEF3FF), contentColor = TsuBluePrimary)
+            ) { Text("−", fontSize = 18.sp, fontWeight = FontWeight.Bold) }
+            Text("$k", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = TsuBluePrimary)
+            Button(
+                onClick = { if (k < minOf(8, allPoints.size)) { k++; result = null } },
+                modifier = Modifier.size(36.dp), contentPadding = PaddingValues(0.dp),
+                shape = RoundedCornerShape(10.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEEF3FF), contentColor = TsuBluePrimary)
+            ) { Text("+", fontSize = 18.sp, fontWeight = FontWeight.Bold) }
+            Spacer(Modifier.weight(1f))
+            Button(
+                onClick = { if (allPoints.size >= k) result = kmeans(allPoints, k) },
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = TsuBluePrimary)
+            ) { Text("Кластеризовать", fontWeight = FontWeight.SemiBold, fontSize = 13.sp) }
+        }
+
+        BoxWithConstraints(
+            modifier = Modifier.fillMaxWidth().weight(1f)
+                .padding(horizontal = 16.dp, vertical = 8.dp)
+                .shadow(8.dp, RoundedCornerShape(24.dp))
+                .clip(RoundedCornerShape(24.dp)).background(Color.White)
+        ) {
+            val bW = constraints.maxWidth.toFloat()
+            val bH = constraints.maxHeight.toFloat()
+            val gridRows = grid.size; val gridCols = grid[0].size
+            val fit = minOf(bW / gridCols, bH / gridRows)
+            val mW = fit * gridCols; val mH = fit * gridRows
+            val cellW = mW / gridCols; val cellH = mH / gridRows
+            val density = androidx.compose.ui.platform.LocalDensity.current
+            val mapWDp = with(density) { mW.toDp() }
+            val mapHDp = with(density) { mH.toDp() }
+            val mapStartXDp = with(density) { ((bW - mW) / 2f).toDp() }
+            val mapStartYDp = with(density) { ((bH - mH) / 2f).toDp() }
+
+            Box(
+                modifier = Modifier.fillMaxSize()
+                    .pointerInput(Unit) {
+                        detectTransformGestures { _, pan, zoom, _ ->
+                            val ns = (scale * zoom).coerceIn(1f, 8f); scale = ns
+                            val mx = ((mW * ns) - bW).coerceAtLeast(0f) / 2f
+                            val my = ((mH * ns) - bH).coerceAtLeast(0f) / 2f
+                            offsetX = (offsetX + pan.x).coerceIn(-mx, mx)
+                            offsetY = (offsetY + pan.y).coerceIn(-my, my)
+                        }
+                    }
+                    .pointerInput(Unit) {
+                        detectTapGestures { tap ->
+                            val pivX = bW / 2f; val pivY = bH / 2f
+                            val wx = (tap.x - pivX - offsetX) / scale + pivX - (bW - mW) / 2f
+                            val wy = (tap.y - pivY - offsetY) / scale + pivY - (bH - mH) / 2f
+                            val col = (wx / cellW).toInt(); val row = (wy / cellH).toInt()
+                            if (row in grid.indices && col in grid[0].indices && grid[row][col] != 0) {
+                                val pt = col to row
+                                userPoints = if (pt in userPoints) userPoints - pt else userPoints + pt
+                                result = null
+                            }
+                        }
+                    }
+            ) {
+                Box(modifier = Modifier.fillMaxSize().graphicsLayer(scaleX = scale, scaleY = scale, translationX = offsetX, translationY = offsetY)) {
+                    Box(modifier = Modifier.offset(x = mapStartXDp, y = mapStartYDp).size(width = mapWDp, height = mapHDp)) {
+                        Canvas(modifier = Modifier.fillMaxSize()) {
+                            for (row in 0 until gridRows) {
+                                for (col in 0 until gridCols) {
+                                    val color = when (grid[row][col]) {
+                                        0 -> Color(0xFF808080); 8 -> Color(0xFF0011FF).copy(alpha = 0.3f)
+                                        else -> Color(0xFFB0BEC5)
+                                    }
+                                    drawRect(color, topLeft = Offset(col * cellW, row * cellH), size = Size(cellW, cellH))
+                                }
+                            }
+
+                            result?.let { res ->
+                                res.centroids.forEachIndexed { ci, (cx, cy) ->
+                                    val clusterPts = allPoints.filterIndexed { i, _ -> res.assignments[i] == ci }
+                                    if (clusterPts.isNotEmpty()) {
+                                        val maxDist = clusterPts.maxOf { (px, py) ->
+                                            kotlin.math.sqrt(((px - cx) * (px - cx) + (py - cy) * (py - cy)).toFloat())
+                                        }
+                                        val radius = (maxDist + 5) * minOf(cellW, cellH)
+                                        drawCircle(
+                                            clusterColors[ci % clusterColors.size].copy(alpha = 0.15f),
+                                            radius, Offset(cx.toFloat() * cellW + cellW / 2f, cy.toFloat() * cellH + cellH / 2f)
+                                        )
+                                    }
+                                }
+                            }
+
+                            allPoints.forEachIndexed { i, (col, row) ->
+                                val center = Offset(col * cellW + cellW / 2f, row * cellH + cellH / 2f)
+                                val rad = minOf(cellW, cellH) * 2f
+                                val color = if (result != null) clusterColors[result!!.assignments[i] % clusterColors.size]
+                                else if (i < defaultPoints.size) Color(0xFF1EFF00) else Color(0xFFFF6D00)
+                                drawCircle(Color.White, rad * 1.3f, center)
+                                drawCircle(color, rad, center)
+                                drawCircle(Color.White, rad * 0.3f, center)
+                            }
+
+                            result?.centroids?.forEachIndexed { ci, (cx, cy) ->
+                                val center = Offset(cx.toFloat() * cellW + cellW / 2f, cy.toFloat() * cellH + cellH / 2f)
+                                val rad = minOf(cellW, cellH) * 3f
+                                drawCircle(clusterColors[ci % clusterColors.size], rad, center)
+                                drawLine(Color.White, Offset(center.x - rad * 0.6f, center.y), Offset(center.x + rad * 0.6f, center.y), strokeWidth = 2f)
+                                drawLine(Color.White, Offset(center.x, center.y - rad * 0.6f), Offset(center.x, center.y + rad * 0.6f), strokeWidth = 2f)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        Surface(
+            modifier = Modifier.fillMaxWidth(), color = Color.White, shadowElevation = 8.dp,
+            shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp)
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Text(
+                    "Точек: ${allPoints.size} (еда: ${defaultPoints.size}, свои: ${userPoints.size})",
+                    fontSize = 13.sp, color = Color.Gray
+                )
+                Text("Тапните на карту, чтобы добавить/убрать точку", fontSize = 12.sp, color = Color.Gray)
+                if (result != null) {
+                    Spacer(Modifier.height(4.dp))
+                    Text("Кластеризация за ${result!!.iterations} итераций", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = TsuBluePrimary)
+                    result!!.centroids.forEachIndexed { i, (cx, cy) ->
+                        val count = result!!.assignments.count { it == i }
+                        Text("Кластер ${i + 1}: $count точек, центроид (${"%.1f".format(cx)}, ${"%.1f".format(cy)})",
+                            fontSize = 12.sp, color = clusterColors[i % clusterColors.size], fontWeight = FontWeight.Medium)
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -592,153 +1183,3 @@ fun NeuralNetScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
         OutlinedButton(onClick = { pixels.fill(false); prediction = null }) { Text("Очистить") }
     }
 }
-
-
-const val CAMPUS_MAP_DATA = """
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000888800000008888888888886888888800008888888887888888888888888888888888888888888888888800000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000800888888888000008000000000000800008000000000000000000000000000000800000000000000000800000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000008800000080008000008000000000000800008888888888888888888888888888888800000000000000000800000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000008000000088808000008000000000000800008000000000000000000000000000000800000000000000000800000
-00000000000000000000000000000000000000000000000008880000000000000000000000000000000088000000000888000006000000000000800008000000000000000000000000000000870000000000000000800000
-00000000000000000000000000000000300000000000000000080000000000000000000000000000000080000000000008000000000000000000800008000000000000000000000000000000800000000000000000800000
-00000000000000058800000000000000800000000000000000080000000000000000000000000000000880000000000008000000000000000000800008000000000000000000000000000000800000888888888000800000
-00000000000000000800000000008888800000000000000000080000000000000000000000000000000800000000000008000000000000000000800008000000000000000000000000000000800000800000008000800000
-00000000000000000800000000008000000000000000000000080000000000000888888880000000008800000000000008000000000000000000800008000000000000000000000000000000850000800000008000800000
-00000000000000000800000000008000000000000000000000088888888888888800000088888000008000000000000008000000000000000000800008000000000000000000000000000000800000800000008000800000
-00000000000000000800000088888000000000000000000000008000000000000000000000008888888000000000000008000000000000000000800008000000000000000000000000000000800000800000008888800000
-00000000000000000800000080000000000000000000000000008000000000000000000000000000080000000000000000000000000000000000800008000000000000000000000000000000800000800000000000800000
-00000000000000000800000080000000000000000000000000088000000000000000000000000000080000000000000000000000000000000000800008000000000000000000000000000000800000800000000000800000
-00000000000000008800000080000000000000000000000000080000000000000000000000000000880000000000000000000000000000000000800008000000000000000000000000000000800000800000000000800000
-00000000000000008000088880000000000800000000000000880000000000000000000000000000800000000000000000000000000000000000800008000000000000000000000000000000888888800000000000800000
-00000000000000008000080000000000000800000000000000800000000000000000000000000000800000000000000000000860000000000000800008000000000000000000000000000000800000000000000000800000
-00000000000000008000080000000000000888888888888888800000000000000000000000000008800000000000000000000800000000000000800008000000000000000000000000000000800000000000000000800000
-00000000000000008000088888888888880800000000000000000000000000000000000000000008000000000000000000000800000000000000800008000000000000000000000000000000800000000000000000800000
-00000000000000008000080000000000088800000000000000000000000000000000000000000008000000000000000000088800000000000000800008000000000000000000000000000000800000000000000000800000
-00000000000000008000080000000000000888880000000000000000000000000000000000000088000000000000000088880800000000000000800008000000000000000000000000000000800000000000000000800000
-00000000000000008000080000000000000000088880000000000000000000000000000000000880000000000000008880000800000000000000800008000000000000000000000000000000800000000000000000800000
-00000000000000008000080000000000000000000088888000000000000000000000000000008800000000000000888000000888000000000000800008000000000000000000000000000000800000000000000000800000
-00000000000000008000080000000000000000000000008880000000000000000000000000008000000000000088800000000808000000000000800008000000000000000000000000000000800000000000000000800000
-00000000000000008000080000000000000000000000000088880000000000000000000000008000000000008880000000000808000000000000800008000000000000000000000000000000800000000000000000800000
-00000000000000008000080000000000000000000000000000088888800000000000000000088000000008888000000000000808000000000000800008000000000000000000000000000000800000000000000000800000
-00000000000000008000080000000000000000000000000000008000888888000000000000080000000088000000000000000808800000000000800008000000000000000000000000000000800000000000000000800000
-00000000000000008000080000000000000000000000000000008000000008888888000000080000000880000000000000000800800000000000800008000000000000000000000000000000800000000000000000800000
-00000000000000008000080000700000000888888000000000088000000000080008888888888888888800000000000000000800800000000000800008000000000000000000000000000000800000000000000000800000
-00000000000000008000080000800000000808008000000000080000000000080000000008008000000880000000000000000800880000000000800008000000000000000000000000000000800000000000000000800000
-00000000000000008000080000800000000808088000000000080000000000080000008888008000000080000000000000000800080000000000800008000000000000000000000000000000800000000000000000800000
-00000000000000008000080000800000000808080000000000080000000000880000088008008000000088000000000000000800080000000000800008000000000000000000000000000000800000000000000000800000
-00000000000000008000080000800000000808080000000000080000000088800000880008008000000008000000000000000800088000000000800008000000000000000000000000000000800000000000000000800000
-00000000000000008000380000800000000808080000000000880000000080800008800008008000000008000000000000000800008000000000800008000000000000000000000000000000800000000000000000800000
-00000000000000008000080000800000000808880000000000800000000080800008000008008000000008800000000000008800008800000000800008000000000000000000000000000000888888880000000000800000
-00000000000000008000080000800000000808000000000000800000008880800088000088008000000000888000000000008000000800000000800008000000000000000000000000000000800000080000000000800000
-00000000000000008000080000800000000808000000000000800000000088888880000080008000000000088800000000008000000888000000800008000000000000000000000000000000800000080000000000800000
-00000000000000008000080000800000000808000000000008800000000000000088880880008000000000080880000000088000000008000000800008000000000000000000000000000000800000080000000000800000
-00000000000000008000080000800000000888000000000008000000000000000080088800088000000000088088000000080000000008000000800008000000000000000000000000000000800000080000000000800000
-00000000000000008880080000800000000808000000000008000000000000000880070800888000000000008008800000080000000008000000800008000000000000000000000000000000800000080000000000800000
-00000000000000000088888888888700000808000000000008000000000000000800000888808888000000008000888000080000000008800000800008000000000000000000000000000000800000080000000000800000
-00000000000000000080000000000000000808000000000008000000000000000800000080000008888000008000008888888000000000800000800008000000000000000000000000000000800000080000000000800000
-00000000000000000080000000000000000888000000000008888800000088888800000080000000008000008800000080808000000000880000800008000000000000000000000000000000800000088888888888800000
-00000000000000000080000000000000000800000088888888000888800080000000000080000000008000000800000880808880000000088000800008000000000000000000000000000000800000000000000000800000
-00000000000000000080000000000000000888888880000000000000888880000000000080000000008000000880008800800088000000008000800008000000000000000000000000000000800000000000000000800000
-00000000000000000080000000000000008800000000000000000000800000000000000080000000008000000080088088888008800000008800800008000000000000000000000000000000800000000000000000800000
-00000000000000000080000000000000008000000000000000000000800000000000000080000000008000000080880080808000880000000880800008000000000000000000000000000000800000000000000000800000
-00000000000000000088888888888888888000000000000000000008800000000000000484000000008000000088800880808880088000000080800003000000000000000000888888888888800000000000000000800000
-00000000000000000080000000000000000000000000000000000008000000000000000080000000008000000008800800800080008000000080800008000000000000000000800000000000800000000000000000800000
-00000000000000000080000000000000000000000000000000000008000000000000000080000000008000000008888888288888888888888888880008000000000000000000800000000000800000000000000000800000
-00000000000000000080000000000000000000000000000000000008000000000000000080000000008000000078888888888888888888888888880008000000000000000000800000000000850000000000000000800000
-00000000000000008880000000000000000000000000000000000008000000000000000084000000008000000008000800800080008000000080880008000000000000000000800000000000800000000000000000800000
-00000000000000008000000000000000000000000000000008888888000000000000000080000000008000000008000880800880088600000080888888888000000000000000800000000000800000000000000000800000
-00000000000000008000000000000000000000000000000008000000000000000000000080000000008000000008800080800800880000000080880008008888888888888888800000000000888888888888888888800000
-00000000000000008000000000000000000000000000000008000000000000000000888880000000008000000088880088888808800000000080880008808000000000000000000000000000800000000000000000800000
-00000000000000008000000000000000000000000000000008000000000000000000800000000000008000000080088000800088000000000080880000808000000000000000000000000000800000000000000000800000
-00000000000000008000000000000000000000000000000788888888888888880088800000000000008000000880008880808880000000000080880000808000000000000000000000000000800000000000000000800000
-00000000000000008000000000000000000000000000000000000000000008088080000000000008888000000800000088888000000000008880880000808840000000000000000000000000800000000000000000800000
-00000000000000008000000000000000000000000000000000000000000008008880000000000088000000000800000088000000000000008000880000800000000000000000000000000000800000000000000000800000
-00000000000000008000000000000000000000000000000000000000000008000080000888888880000000008800000888800000000000008000880000800000000000000000000000000000800000000000000000800000
-00000000000000388000000000000000000000000000000000000000048808000088088800008000000000008000088800880000000000008000880000800000000000000000000000000000800000000000000000800000
-00000000000000080000000000000000000000000000000000000000000808000008880000008000000000088000880000080000000000008000880000800000000000000000000000000000800000000000000000800000
-00000000000000080000000000000000000000000000000000000000000808000008088000008800000000080008800000088000000000068000880000800000000000000000000000000000800000000000000000800000
-00000000000000880000000000000000000000000000000000000000048808000088008880000800000000080088000000008800000000000000880000800000000000000000000000000000800000000000000000800000
-00000000000000800000000000000000000000000000000000000000000808000080000088888800000000088880000000000880000000000000880000800000000000000000000000000000800000000000000000800000
-00000000000000800000000000000000000000000000000000000000018888888888888880000800000000888000000000000080000000000000880000800000000000000000000000000000800000000000000000800000
-00000000000000800000000000000000000000000000000000000000000808000000000000000800000000888000000000006888000000000000880000800000000000000000000000000000800000000000000000800000
-00000000000000800000000000000000000000000000000000000000078808000000000000000800000008800000000000000008000000000000880000800000000000000000000000000000800000000000000000800000
-00000000000000800000000000000000000000000000000000000000000008000000000000000800000088000000000000000008800000000000880000800000000000000000000000000000800000000000000000800000
-00000000000008800000000000000000000000000000000000000000000008000000000000000800000080000000000000000000800000000000880000800000000000000000000000000000800000000000000000800000
-00000000000008000000000000000000000000000000000000000000000008000000000000000800000880000000000000000000888000000000880000800000000000000000000000000000800000000000000000800000
-00000000000008000000000000000000000000000000000000000000000008000000000000000800000800000000000000000000808000000000880000800000000000000000000000000000800000000000000000800000
-00000000000008000000000000000000000000000000000000000000000008888888888888888888888800000000000000000000808888888000880000800000000000000000000000000000800000000000000000800000
-00000000000008000000000000000000000000000000000000000000000008008000800000000000888000000000000000000088808000008888880000800000000000000000000000000000800000000000000000800000
-00000000000008000000000000000000000888888000000000000000000088008000700000000000088880000000000000000088008000008000080000800000000000000000000000000000800000000000000000800000
-00000000000088000000000000000000000800008888888888888888888880008000000000000000080088000000000000000088008008888000080000800000000000000000000000000000800000000000000000800000
-00000000000080000000000000000000000800000000000000000000000000008000000000000000080008880000000000000088008888000000083000800000000000000000000000000000800000000000000000800000
-00000000000080000000000000000000000800000000000000000000000000008000000000000000080000088888000000000088000000000000080000800000000000000000000000000000800000000000000000800000
-00000000000080000000000000000000000800000000000000000000000000008000000000000000880000000088800000000088000000000000080000800000000000000000000000000000800000000000000000800000
-00000000000080000000000000000000000800000000000000000000000800008000000000000000800000000000888800000088000000000000080000800000000000000000000000000000800000000000000000800000
-00000000000080000000000000000000000800000000000000000000000888808000000000000000800000000000000888000088000000000000080000800000000000000000000000000000800000000000000000800000
-00000000000080000000000000000000006800000000000000000000000000888000000000000000800000000000000008888888000000000000080000800000000000000000000000000000800000000000000000800000
-00000000000080000000000000000000000800000000000000000000000000008888800000000008800000000000000000000888000000000000080000800000000000000000000000000000800000000000000000800000
-00000000000880000000000000000000000800000000000000000000000000000000888888888888888888888888888888888888888888888888880000800000000000000000000000000000800000000000000000800000
-00000000000800000000000000000000000800000000000000000000000000000008800060000008000000000000000000000000000100000000000000800000000000000000000000000000800000000000000000800000
-00000000003800000000000000000000000800000000000000000000000000000008000000000008000000000000000000000000000000000000000000800000000000000000000000000000800000000000000000800000
-00000000000800000000000000000000000800000000000000000000000000000008000000000008000000000000000000000000000000000000000000800000000000000000000000000000800000000000000000800000
-00000000000800000000000000000000000800000000000000000000000000000000000000000008000000000000000000000000000000000000000000800000000000000000000000000000800000000000000000800000
-00000000008800000000000000000000000800000000000000000000000000000000000000000008000000000000000000000000000000000000000000800000000000000000000000000000800000000000000000800000
-00000000008000000000000000000000000800000000000000000000000000000000000000000008000000000000000000000000000000000000000000800000000000000000000000000000800000000000000000800000
-00000000008888888888888888888888888800086000000000000000000000000000000000000088000000000000000000000000000000000000000000800000000000000000000000000000800000000000000000800000
-00000000000000000000000000000000000000080000000000000000000000000000000000000080000000000000000000000000000000000000000000800000000000000000000000000000800000000000000000800000
-00000000000000000000000000000000000000080000000000000000000000000000000000000880000000000000000000000000000000000000000000800000000000000000000000000000800000000000000000800000
-00000000000000000000000000000000000000088888888888888888888880000000000000000800000000000000000000000000000000000000000000800000000000000000000000000000800000000000000000800000
-00000000000000000000000000000000000000000000000000000000000088000000000000008800000000000000000000000000000000000000000000800000000000000000000000000000800000000000000000800000
-00000000000000000000000000000000000000000000000000000000000008800000000000008000000000000000000000000000000000000000000000800000000000000000000000000000800000000000000000800000
-00000000000000000000000000000000000000000000000000000000000000800000000000008000000000000000000000000000000000000000000000800000000000000000000000000000800000000000000000800000
-00000000000000000000000000000000000000000000000000000000000000888000000000088000000000000000000000000000000000000000000000800000000000000000000000000000800000000000000000800000
-00000000000000000000000000000000000000000000000000000000000000008000000000080000000000000000000000000000000000000000000000800000000000000000000000000000800000000000000000800000
-00000000000000000000000000000000000000000000000000000000000000008000000000080000000000000000000000000000000000000000000000800000000000000000000000000000800000000000000000800000
-00000000000000000000000000000000000000000000000000000000000000008000000000080000000000000000000000000000000000000000000000800000000000000000000000000000800000000000000000800000
-00000000000000000000000000000000000000000000000000000888800000888800000000080000000000000000000000000000000000000000000000800000000000000000000000000000800000000000000000800000
-00000000000000000000000000000000000000000000000000000000888808800880000000080000000000000000000000000000000000000000000000800000000000000000000000000000800000000000000000800000
-00000000000000000000000000000000000000000000000000000000000888000088000000080000000000000000000000000000000000000000000000888888888888888888888888888888888888888888888888880000
-00000000000000000000000000000000000000000000000000000000000080000008800000080000000000000000000000000000000000000000000000800000000000000000000000000000000000000000000000080000
-00000000000000000000000000000000000000000000000000000000008880000000880000080000000000000000000000000000000000000000000000800000000000000000000000000000000000000000000000080000
-00000000000000000000000000000000000000000000000000000000088000000000088008888800000000000000000000000000000000000000000000888888888888888888888888888888888888888888888888880000
-00000000000000000000000000000000000000000000000000000000080000000000008888000888600000000000000000000000000000000000000000000000000000000000000000000000000000000000000000080000
-00000000000000000000000000000000000000000000000000000000880000000000000880000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000080000
-00000000000000000000000000000000000000000000000000000000800000000000000800000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000080000
-00000000000000000000000000000000000000000000000000000000800000000000008800000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000080000
-00000000000000000000000000000000000000000000000000000000800000000000008000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000080000
-00000000000000000000000000000000000000000000000000000000800000000000088000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000080000
-00000000000000000000000000000000000000000000000000000000888000000000080000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000080000
-00000000000000000000000000000000000000000000000000000000008868888888880000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000080000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000580000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-"""
