@@ -495,16 +495,16 @@ fun CampusMapScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
 fun RouteScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
     val context = LocalContext.current
 
+    val rawLines = remember {
+        context.assets.open("tsu_campus_matrix.txt").bufferedReader().use { it.readLines() }
+    }
+
     val grid = remember {
-        context.assets.open("tsu_campus_matrix.txt").bufferedReader().use { reader ->
-            reader.readLines().map { line ->
-                line.map { it.toString().toInt() }.toIntArray()
-            }.toTypedArray()
-        }
+        rawLines.map { line -> line.map { it.toString().toIntOrNull() ?: 0 }.toIntArray() }.toTypedArray()
     }
 
     val mapData = remember {
-        val lines = CAMPUS_MAP_DATA.trim().lines()
+        val lines = rawLines
         val gridRows = lines.size
         val gridCols = lines.maxOfOrNull { it.length } ?: 0
         val tiles = mutableListOf<Triple<Int, Int, Color>>()
@@ -541,12 +541,6 @@ fun RouteScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
         else null
     }
 
-<<<<<<< HEAD
-    var scale by remember { mutableFloatStateOf(3f) }
-    var offsetX by remember { mutableFloatStateOf(0f) }
-    var offsetY by remember { mutableFloatStateOf(0f) }
-
-=======
     var scale by remember { mutableFloatStateOf(1f) }
     var offsetX by remember { mutableFloatStateOf(0f) }
     var offsetY by remember { mutableFloatStateOf(0f) }
@@ -557,7 +551,6 @@ fun RouteScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
         else -> 2
     }
 
->>>>>>> 90ac5008fae0352bd7bd81865c4e388ecc7506d5
     Column(modifier = modifier.fillMaxSize().background(Color(0xFFF0F2F5))) {
         Row(
             modifier = Modifier
@@ -575,148 +568,6 @@ fun RouteScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
                 Text("←", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Bold)
             }
             Spacer(Modifier.width(14.dp))
-<<<<<<< HEAD
-            Text("Навигация (A*)", fontSize = 20.sp, fontWeight = FontWeight.ExtraBold, color = Color(0xFF1A1A2E))
-            Spacer(Modifier.weight(1f))
-            Button(
-                onClick = { start = null; end = null; scale = 3f; offsetX = 0f; offsetY = 0f },
-                shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEEF3FF), contentColor = TsuBluePrimary)
-            ) { Text("Сбросить", fontWeight = FontWeight.SemiBold) }
-        }
-
-        BoxWithConstraints(
-            modifier = Modifier
-                .fillMaxWidth()
-                .weight(1f)
-                .padding(horizontal = 16.dp, vertical = 12.dp)
-                .shadow(8.dp, RoundedCornerShape(24.dp))
-                .clip(RoundedCornerShape(24.dp))
-                .background(Color.White)
-        ) {
-            val bW = constraints.maxWidth.toFloat()
-            val bH = constraints.maxHeight.toFloat()
-            val gridRows = grid.size
-            val gridCols = grid[0].size
-            val fit = minOf(bW / gridCols, bH / gridRows)
-            val mW = fit * gridCols
-            val mH = fit * gridRows
-            val cellW = mW / gridCols
-            val cellH = mH / gridRows
-
-            val density = androidx.compose.ui.platform.LocalDensity.current
-            val mapWDp = with(density) { mW.toDp() }
-            val mapHDp = with(density) { mH.toDp() }
-            val mapStartXDp = with(density) { ((bW - mW) / 2f).toDp() }
-            val mapStartYDp = with(density) { ((bH - mH) / 2f).toDp() }
-
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .pointerInput(Unit) {
-                        detectTransformGestures { _, pan, zoom, _ ->
-                            val newScale = (scale * zoom).coerceIn(1f, 8f)
-                            scale = newScale
-                            val maxOffsetX = ((mW * newScale) - bW).coerceAtLeast(0f) / 2f
-                            val maxOffsetY = ((mH * newScale) - bH).coerceAtLeast(0f) / 2f
-                            offsetX = (offsetX + pan.x).coerceIn(-maxOffsetX, maxOffsetX)
-                            offsetY = (offsetY + pan.y).coerceIn(-maxOffsetY, maxOffsetY)
-                        }
-                    }
-                    .pointerInput(Unit) {
-                        detectTapGestures { tap ->
-                            val pivX = bW / 2f
-                            val pivY = bH / 2f
-                            val worldX = (tap.x - pivX - offsetX) / scale + pivX - (bW - mW) / 2f
-                            val worldY = (tap.y - pivY - offsetY) / scale + pivY - (bH - mH) / 2f
-                            val col = (worldX / cellW).toInt()
-                            val row = (worldY / cellH).toInt()
-                            if (row in grid.indices && col in grid[0].indices && grid[row][col] != 0) {
-                                if (start == null) {
-                                    start = Pair(row, col)
-                                } else if (end == null) {
-                                    end = Pair(row, col)
-                                }
-                            }
-                        }
-                    }
-            ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .graphicsLayer(
-                            scaleX = scale,
-                            scaleY = scale,
-                            translationX = offsetX,
-                            translationY = offsetY
-                        )
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .offset(x = mapStartXDp, y = mapStartYDp)
-                            .size(width = mapWDp, height = mapHDp)
-                    ) {
-                        Canvas(modifier = Modifier.fillMaxSize()) {
-                            for (row in 0 until gridRows) {
-                                for (col in 0 until gridCols) {
-                                    val color = when (grid[row][col]) {
-                                        0 -> Color(0xFF808080)
-                                        1 -> Color(0xFFFFFF00)
-                                        2 -> Color(0xFFFF00E6)
-                                        3 -> Color(0xFF00EEFF)
-                                        4 -> Color(0xFF1EFF00)
-                                        5 -> Color(0xFFFF0400)
-                                        6 -> Color(0xFF900B09)
-                                        7 -> Color(0xFF532C00)
-                                        8 -> Color(0xFF0011FF)
-                                        else -> Color.LightGray
-                                    }
-                                    drawRect(
-                                        color = color,
-                                        topLeft = Offset(col * cellW, row * cellH),
-                                        size = Size(cellW, cellH)
-                                    )
-                                }
-                            }
-                            start?.let { (r, c) ->
-                                drawCircle(
-                                    color = Color.Cyan,
-                                    radius = cellW * 2,
-                                    center = Offset(c * cellW + cellW / 2, r * cellH + cellH / 2)
-                                )
-                            }
-                            end?.let { (r, c) ->
-                                drawCircle(
-                                    color = Color.Red,
-                                    radius = cellW * 2,
-                                    center = Offset(c * cellW + cellW / 2, r * cellH + cellH / 2)
-                                )
-                            }
-                            path?.forEach { (r, c) ->
-                                drawRect(
-                                    color = Color.White,
-                                    topLeft = Offset(c * cellW, r * cellH),
-                                    size = Size(cellW, cellH)
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-
-            Box(modifier = Modifier.align(Alignment.BottomEnd).padding(12.dp)) {
-                Surface(
-                    shape = RoundedCornerShape(10.dp),
-                    color = Color.White.copy(alpha = 0.92f),
-                    shadowElevation = 4.dp
-                ) {
-                    Text(
-                        "×${"%.1f".format(scale)}",
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = TsuBluePrimary,
-                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
-=======
             Column {
                 Text(
                     "Навигация A*",
@@ -739,27 +590,11 @@ fun RouteScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
                         fontWeight = FontWeight.SemiBold,
                         color = Color(0xFFCC3333),
                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
->>>>>>> 90ac5008fae0352bd7bd81865c4e388ecc7506d5
                     )
                 }
             }
         }
 
-<<<<<<< HEAD
-        if (start != null || end != null || path != null) {
-            Surface(
-                modifier = Modifier.fillMaxWidth(),
-                color = Color.White,
-                shadowElevation = 8.dp,
-                shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp)
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    if (start != null) Text("Старт: [${start!!.second}, ${start!!.first}]", fontSize = 14.sp, color = Color(0xFF00897B))
-                    if (end != null) Text("Финиш: [${end!!.second}, ${end!!.first}]", fontSize = 14.sp, color = Color(0xFFE53935))
-                    if (path != null) Text("Маршрут найден! ${path!!.size} шагов", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = TsuBluePrimary)
-                    else if (start != null && end != null) Text("Маршрут не найден", fontSize = 14.sp, color = Color.Red)
-                    else if (start != null && end == null) Text("Выберите конечную точку", fontSize = 13.sp, color = Color.Gray)
-=======
         Surface(
             modifier = Modifier.fillMaxWidth(),
             color = Color.White,
@@ -1073,7 +908,6 @@ fun RouteScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
                             Text("Путь", fontSize = 12.sp, color = Color(0xFF666666))
                         }
                     }
->>>>>>> 90ac5008fae0352bd7bd81865c4e388ecc7506d5
                 }
             }
         }
