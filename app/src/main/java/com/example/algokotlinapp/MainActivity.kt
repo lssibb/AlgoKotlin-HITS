@@ -1158,6 +1158,50 @@ fun FoodScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
                     }
                 }
             }
+
+            Column(
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(12.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Surface(
+                    shape = RoundedCornerShape(12.dp),
+                    color = Color.White.copy(alpha = 0.95f),
+                    shadowElevation = 6.dp
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        IconButton(
+                            onClick = { scale = (scale * 1.4f).coerceIn(1f, 8f) },
+                            modifier = Modifier.size(42.dp)
+                        ) {
+                            Text("+", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = TsuBluePrimary)
+                        }
+                        Box(modifier = Modifier.height(1.dp).width(34.dp).background(Color(0xFFE8E8E8)))
+                        Text(
+                            "×${"%.1f".format(scale)}",
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF999999),
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 5.dp)
+                        )
+                        Box(modifier = Modifier.height(1.dp).width(34.dp).background(Color(0xFFE8E8E8)))
+                        IconButton(
+                            onClick = {
+                                val newScale = (scale / 1.4f).coerceIn(1f, 8f)
+                                val maxOffX = ((mW * newScale) - bW).coerceAtLeast(0f) / 2f
+                                val maxOffY = ((mH * newScale) - bH).coerceAtLeast(0f) / 2f
+                                scale = newScale
+                                offsetX = offsetX.coerceIn(-maxOffX, maxOffX)
+                                offsetY = offsetY.coerceIn(-maxOffY, maxOffY)
+                            },
+                            modifier = Modifier.size(42.dp)
+                        ) {
+                            Text("−", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = TsuBluePrimary)
+                        }
+                    }
+                }
+            }
         }
 
         Surface(
@@ -1369,6 +1413,50 @@ fun KMeansScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
                     }
                 }
             }
+
+            Column(
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(12.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Surface(
+                    shape = RoundedCornerShape(12.dp),
+                    color = Color.White.copy(alpha = 0.95f),
+                    shadowElevation = 6.dp
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        IconButton(
+                            onClick = { scale = (scale * 1.4f).coerceIn(1f, 8f) },
+                            modifier = Modifier.size(42.dp)
+                        ) {
+                            Text("+", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = TsuBluePrimary)
+                        }
+                        Box(modifier = Modifier.height(1.dp).width(34.dp).background(Color(0xFFE8E8E8)))
+                        Text(
+                            "×${"%.1f".format(scale)}",
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF999999),
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 5.dp)
+                        )
+                        Box(modifier = Modifier.height(1.dp).width(34.dp).background(Color(0xFFE8E8E8)))
+                        IconButton(
+                            onClick = {
+                                val newScale = (scale / 1.4f).coerceIn(1f, 8f)
+                                val maxOffX = ((mW * newScale) - bW).coerceAtLeast(0f) / 2f
+                                val maxOffY = ((mH * newScale) - bH).coerceAtLeast(0f) / 2f
+                                scale = newScale
+                                offsetX = offsetX.coerceIn(-maxOffX, maxOffX)
+                                offsetY = offsetY.coerceIn(-maxOffY, maxOffY)
+                            },
+                            modifier = Modifier.size(42.dp)
+                        ) {
+                            Text("−", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = TsuBluePrimary)
+                        }
+                    }
+                }
+            }
         }
 
         Surface(
@@ -1559,6 +1647,50 @@ fun CoworkingScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
                                     drawCircle(color, rad * 0.85f, center)
                                 }
                             }
+                        }
+                    }
+                }
+            }
+
+            Column(
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(12.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Surface(
+                    shape = RoundedCornerShape(12.dp),
+                    color = Color.White.copy(alpha = 0.95f),
+                    shadowElevation = 6.dp
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        IconButton(
+                            onClick = { scale = (scale * 1.4f).coerceIn(1f, 8f) },
+                            modifier = Modifier.size(42.dp)
+                        ) {
+                            Text("+", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = TsuBluePrimary)
+                        }
+                        Box(modifier = Modifier.height(1.dp).width(34.dp).background(Color(0xFFE8E8E8)))
+                        Text(
+                            "×${"%.1f".format(scale)}",
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF999999),
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 5.dp)
+                        )
+                        Box(modifier = Modifier.height(1.dp).width(34.dp).background(Color(0xFFE8E8E8)))
+                        IconButton(
+                            onClick = {
+                                val newScale = (scale / 1.4f).coerceIn(1f, 8f)
+                                val maxOffX = ((mW * newScale) - bW).coerceAtLeast(0f) / 2f
+                                val maxOffY = ((mH * newScale) - bH).coerceAtLeast(0f) / 2f
+                                scale = newScale
+                                offsetX = offsetX.coerceIn(-maxOffX, maxOffX)
+                                offsetY = offsetY.coerceIn(-maxOffY, maxOffY)
+                            },
+                            modifier = Modifier.size(42.dp)
+                        ) {
+                            Text("−", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = TsuBluePrimary)
                         }
                     }
                 }
