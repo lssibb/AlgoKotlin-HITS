@@ -12,12 +12,12 @@ data class FoodPlace(
 )
 
 val FOOD_PLACES = listOf(
-    FoodPlace("Старбакс", 55, 71, setOf("coffee", "snack"), 8, 22),
-    FoodPlace("Сибирские блины", 55, 73, setOf("pancakes", "full_meal"), 9, 20),
-    FoodPlace("Столовая ГК", 59, 73, setOf("full_meal", "coffee", "snack"), 8, 18),
-    FoodPlace("Rostic's", 65, 126, setOf("full_meal", "snack"), 10, 22),
-    FoodPlace("СырБор", 68, 57, setOf("full_meal", "snack", "coffee"), 9, 21),
-    FoodPlace("Вендинг 2 корпус", 71, 57, setOf("coffee", "snack"), 0, 24)
+    FoodPlace("Старбукс", 55, 91, setOf("coffee", "snack"), 8, 22),
+    FoodPlace("Сибирские блины", 59, 93, setOf("pancakes", "full_meal"), 9, 20),
+    FoodPlace("Столовая Сырбор", 55, 93, setOf("full_meal", "coffee", "snack"), 8, 18),
+    FoodPlace("РОСТИКС", 65, 161, setOf("full_meal", "snack"), 10, 22),
+    FoodPlace("Буфет 2 корпус", 71, 73, setOf("full_meal", "snack", "coffee"), 8, 18),
+    FoodPlace("Вендинговый автомат", 68, 73, setOf("coffee", "snack"), 0, 24)
 )
 
 val FOOD_LABELS = mapOf(

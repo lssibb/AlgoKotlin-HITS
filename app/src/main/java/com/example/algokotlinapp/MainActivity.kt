@@ -40,18 +40,57 @@ import com.example.algokotlinapp.ui.theme.*
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 
-data class LocationInfo(val name: String, val type: String, val description: String)
+data class LocationInfo(val name: String, val type: String, val description: String, val color: Long)
 
 val CampusDictionary = mapOf(
-    Pair(57, 73) to LocationInfo("Библиотека ТГУ", "Коворкинг", "Отличное место для учебы. Есть розетки и Wi-Fi."),
-    Pair(88, 72) to LocationInfo("Главный Корпус (ГК)", "Учебный корпус", "Здесь находится приемная комиссия и актовый зал."),
-    Pair(32, 14) to LocationInfo("Остановка 'Университет'", "Транспорт", "Можно уехать в любую точку города."),
-    Pair(98, 72) to LocationInfo("Центр кампуса", "Ориентир", "Центральная точка университетской рощи."),
-    Pair(20, 41) to LocationInfo("Остановка 'ТГУ'", "Транспорт", "Остановка на ул. Ленина."),
-    Pair(47, 64) to LocationInfo("Вход в ФТФ", "Вход", "Физико-технический факультет."),
-    Pair(29, 48) to LocationInfo("Вход в ГК", "Вход", "Главный корпус ТГУ."),
-    Pair(71, 55) to LocationInfo("Столовая", "Еда", "Столовая для студентов и сотрудников."),
-    Pair(15, 15) to LocationInfo("Продуктовый магазин", "Магазин", "Ближайший магазин продуктов.")
+    Pair(41, 14) to LocationInfo("Общежитие университета", "Остановка", "Общежитие рядом с остановкой транспорта.", 0xFF1E88E5),
+    Pair(19, 15) to LocationInfo("Абрикос", "Магазин", "Продуктовый магазин.", 0xFF9C27B0),
+    Pair(26, 41) to LocationInfo("Юридический институт ТГУ", "Остановка", "Остановка рядом с институтом.", 0xFF1E88E5),
+    Pair(37, 48) to LocationInfo("Юридический институт ТГУ", "Вход", "Вход в Юридический институт.", 0xFF795548),
+    Pair(18, 68) to LocationInfo("Юридический институт ТГУ", "Остановка", "Остановка рядом с институтом.", 0xFF1E88E5),
+    Pair(13, 93) to LocationInfo("Белая соборная мечеть", "Остановка", "Мечеть рядом с остановкой.", 0xFF1E88E5),
+    Pair(51, 98) to LocationInfo("Граффити", "Достопримечательность", "Яркое граффити на территории кампуса.", 0xFFFFEB3B),
+    Pair(44, 89) to LocationInfo("Пирс", "Достопримечательность", "Пирс на территории кампуса.", 0xFFFFEB3B),
+    Pair(60, 64) to LocationInfo("Лицей ТГУ, ФФ", "Учебный корпус", "Лицей и факультет фундаментальной медицины.", 0xFF43A047),
+    Pair(77, 122) to LocationInfo("Ботанический сад ТГУ", "Достопримечательность", "Ботанический сад университета.", 0xFFFFEB3B),
+    Pair(73, 68) to LocationInfo("Вендинговый автомат", "Еда", "Вендинговый автомат во втором корпусе.", 0xFFFF9800),
+    Pair(73, 71) to LocationInfo("Буфет второй корпус", "Еда", "Буфет для студентов и сотрудников.", 0xFFFF9800),
+    Pair(73, 73) to LocationInfo("Коворкинг ВК", "Коворкинг", "Коворкинг во втором корпусе.", 0xFF00BCD4),
+    Pair(73, 75) to LocationInfo("Второй корпус", "Вход", "Вход во второй корпус.", 0xFF795548),
+    Pair(102, 115) to LocationInfo("Крылов и Сергиевская", "Памятник", "Памятник Крылову и Сергиевской.", 0xFF900B09),
+    Pair(92, 92) to LocationInfo("Староанатомический корпус", "Учебный корпус", "Староанатомический корпус ТГУ.", 0xFF43A047),
+    Pair(87, 82) to LocationInfo("Спорткорпус ТГУ", "Спорт", "Спортивный корпус университета.", 0xFF4CAF50),
+    Pair(97, 56) to LocationInfo("Приемная комиссия ТГУ", "Администрация", "Приемная комиссия для абитуриентов.", 0xFF607D8B),
+    Pair(91, 55) to LocationInfo("Старбукс", "Еда", "Кофейня Starbucks.", 0xFFFF9800),
+    Pair(93, 55) to LocationInfo("Столовая Сырбор", "Еда", "Столовая Сырбор.", 0xFFFF9800),
+    Pair(93, 59) to LocationInfo("Сибирские блины", "Еда", "Кафе с сибирскими блюдами.", 0xFFFF9800),
+    Pair(114, 57) to LocationInfo("Главный корпус ТГУ", "Учебный корпус", "Главный корпус Томского государственного университета.", 0xFF43A047),
+    Pair(137, 92) to LocationInfo("Библиотека ТГУ", "Коворкинг", "Библиотека и коворкинг с Wi-Fi и розетками.", 0xFF00BCD4),
+    Pair(128, 74) to LocationInfo("Памятник павшим", "Памятник", "Памятник павшим сотрудникам и студентам ТГУ.", 0xFF900B09),
+    Pair(126, 57) to LocationInfo("Центр кампуса", "Ориентир", "Центральная точка кампуса.", 0xFFE91E63),
+    Pair(142, 70) to LocationInfo("Г.Н. Потанин", "Памятник", "Памятник Григорию Потанину.", 0xFF900B09),
+    Pair(151, 84) to LocationInfo("Библиотека ТГУ", "Остановка", "Остановка рядом с библиотекой.", 0xFF1E88E5),
+    Pair(155, 55) to LocationInfo("Остановка ТГУ", "Остановка", "Главная остановка кампуса.", 0xFF1E88E5),
+    Pair(161, 65) to LocationInfo("РОСТИКС", "Еда", "Ресторан быстрого питания Rostic's.", 0xFFFF9800),
+    Pair(196, 58) to LocationInfo("Наш Гастроном", "Магазин", "Продуктовый магазин.", 0xFF9C27B0),
+    Pair(217, 123) to LocationInfo("Ярче на Кирова", "Магазин", "Супермаркет Ярче.", 0xFF9C27B0),
+    Pair(196, 17) to LocationInfo("Ярче на Советской", "Магазин", "Супермаркет Ярче.", 0xFF9C27B0),
+    Pair(196, 13) to LocationInfo("Кафедра ИЗО", "Вход", "Вход в кафедру изобразительного искусства.", 0xFF795548),
+    Pair(166, 9) to LocationInfo("ИЭМ", "Вход", "Вход в Институт экономики и менеджмента.", 0xFF795548),
+    Pair(139, 9) to LocationInfo("Стрит-арт", "Достопримечательность", "Яркий стрит-арт на стене здания.", 0xFFFFEB3B),
+    Pair(131, 24) to LocationInfo("Мост", "Сооружение", "Мост через реку или овраг.", 0xFF607D8B)
+)
+
+val LegendItems = listOf(
+    Pair(Color(0xFF1E88E5), "Остановка"),
+    Pair(Color(0xFFFF9800), "Еда"),
+    Pair(Color(0xFF9C27B0), "Магазин"),
+    Pair(Color(0xFF43A047), "Учебный корпус"),
+    Pair(Color(0xFF00BCD4), "Коворкинг"),
+    Pair(Color(0xFF900B09), "Памятник"),
+    Pair(Color(0xFFFFEB3B), "Достопримечательность"),
+    Pair(Color(0xFF795548), "Вход"),
+    Pair(Color(0xFF607D8B), "Администрация")
 )
 
 class MainActivity : ComponentActivity() {
@@ -117,28 +156,11 @@ fun CampusMapScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
         val lines = context.assets.open("tsu_campus_matrix.txt").bufferedReader().use { it.readLines() }
         val gridRows = lines.size
         val gridCols = lines.maxOfOrNull { it.length } ?: 0
-        val tiles = mutableListOf<Triple<Int, Int, Color>>()
-        for (r in lines.indices) {
-            for (c in lines[r].indices) {
-                val color = when (lines[r][c]) {
-                    '1' -> Color(0xFFFFFF00)
-                    '2' -> Color(0xFFFF00E6)
-                    '3' -> Color(0xFF00EEFF)
-                    '4' -> Color(0xFF1EFF00)
-                    '5' -> Color(0xFFFF0400)
-                    '6' -> Color(0xFF900B09)
-                    '7' -> Color(0xFF532C00)
-                    else -> Color.Transparent
-                }
-                if (color != Color.Transparent) tiles.add(Triple(c, r, color))
-            }
-        }
-        Pair(Triple(gridCols, gridRows, tiles), lines)
+        Pair(Triple(gridCols, gridRows, lines), lines)
     }
 
     val gridCols = mapData.first.first
     val gridRows = mapData.first.second
-    val activeTiles = mapData.first.third
     val rawLines = mapData.second
 
     val grid = remember {
@@ -284,28 +306,20 @@ fun CampusMapScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
                             modifier = Modifier.fillMaxSize()
                         )
                         Canvas(modifier = Modifier.fillMaxSize()) {
-                            activeTiles.forEach { (c, r, color) ->
-                                val cx = c * cellW
-                                val cy = r * cellH
-                                val center = Offset(cx + cellW / 2f, cy + cellH / 2f)
+                            CampusDictionary.forEach { (pos, info) ->
+                                val (c, r) = pos
+                                if (c !in 0 until gridCols || r !in 0 until gridRows) return@forEach
+                                val center = Offset(c * cellW + cellW / 2f, r * cellH + cellH / 2f)
+                                val radius = minOf(cellW, cellH) * 2.0f
                                 val isSel = selectedLocation?.first == c && selectedLocation?.second == r
-                                if (color == Color(0x660011FF)) {
-                                    drawRoundRect(
-                                        Color(0xBB1A6FFF),
-                                        topLeft = Offset(cx, cy),
-                                        size = Size(cellW, cellH),
-                                        cornerRadius = CornerRadius(2f, 2f)
-                                    )
-                                } else {
-                                    val radius = minOf(cellW, cellH) * 1.8f
-                                    if (isSel) {
-                                        drawCircle(TsuBluePrimary.copy(alpha = 0.25f), radius * 2.8f, center)
-                                        drawCircle(Color.White, radius * 1.6f, center)
-                                    }
-                                    drawCircle(Color.Black.copy(alpha = 0.15f), radius + 1.5f, Offset(center.x + 1f, center.y + 1.5f))
-                                    drawCircle(color, radius, center)
-                                    drawCircle(Color.White, radius * 0.38f, center)
+                                val pointColor = Color(info.color)
+                                if (isSel) {
+                                    drawCircle(pointColor.copy(alpha = 0.3f), radius * 2.5f, center)
+                                    drawCircle(Color.White, radius * 1.8f, center)
                                 }
+                                drawCircle(Color.Black.copy(alpha = 0.2f), radius + 1.5f, Offset(center.x + 1f, center.y + 1.5f))
+                                drawCircle(pointColor, radius, center)
+                                drawCircle(Color.White, radius * 0.4f, center)
                             }
 
                             routePath?.forEach { (r, c) ->
@@ -413,6 +427,20 @@ fun CampusMapScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
             }
         }
 
+        Surface(modifier = Modifier.fillMaxWidth(), color = Color.White, shadowElevation = 8.dp) {
+            Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)) {
+                Row(modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    LegendItems.forEach { (color, label) ->
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Box(modifier = Modifier.size(10.dp).background(color, RoundedCornerShape(5.dp)))
+                            Spacer(Modifier.width(4.dp))
+                            Text(label, fontSize = 11.sp, color = Color(0xFF666666))
+                        }
+                    }
+                }
+            }
+        }
+
         AnimatedVisibility(
             visible = selectedLocation != null,
             enter = slideInVertically(initialOffsetY = { it }) + fadeIn(tween(250)),
@@ -422,7 +450,8 @@ fun CampusMapScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
                 val info = CampusDictionary[loc] ?: LocationInfo(
                     "Точка [${loc.first}, ${loc.second}]",
                     "Неизвестный объект",
-                    "Добавь информацию об этой точке в CampusDictionary."
+                    "Добавь информацию об этой точке в CampusDictionary.",
+                    0xFF607D8B
                 )
                 Surface(
                     modifier = Modifier.fillMaxWidth(),
@@ -466,7 +495,8 @@ fun CampusMapScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
                         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                             Button(
                                 onClick = {
-                                    routeEnd = Pair(loc.second, loc.first)
+                                    val nearest = findNearestWalkable(grid, loc.second, loc.first)
+                                    if (nearest != null) routeEnd = nearest else routeEnd = Pair(loc.second, loc.first)
                                     selectedLocation = null
                                 },
                                 modifier = Modifier.weight(1f).height(48.dp),
@@ -475,7 +505,8 @@ fun CampusMapScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
                             ) { Text("Маршрут сюда", fontWeight = FontWeight.SemiBold) }
                             OutlinedButton(
                                 onClick = {
-                                    routeStart = Pair(loc.second, loc.first)
+                                    val nearest = findNearestWalkable(grid, loc.second, loc.first)
+                                    if (nearest != null) routeStart = nearest else routeStart = Pair(loc.second, loc.first)
                                     selectedLocation = null
                                 },
                                 modifier = Modifier.weight(1f).height(48.dp),
@@ -503,37 +534,40 @@ fun RouteScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
         rawLines.map { line -> line.map { it.toString().toIntOrNull() ?: 0 }.toIntArray() }.toTypedArray()
     }
 
-    val mapData = remember {
-        val lines = rawLines
-        val gridRows = lines.size
-        val gridCols = lines.maxOfOrNull { it.length } ?: 0
-        val tiles = mutableListOf<Triple<Int, Int, Color>>()
-        for (r in lines.indices) {
-            for (c in lines[r].indices) {
-                val color = when (lines[r][c]) {
-                    '1' -> Color(0xFFFFFF00)
-                    '2' -> Color(0xFFFF00E6)
-                    '3' -> Color(0xFF00EEFF)
-                    '4' -> Color(0xFF1EFF00)
-                    '5' -> Color(0xFFFF0400)
-                    '6' -> Color(0xFF900B09)
-                    '7' -> Color(0xFF532C00)
-                    '8' -> Color(0x880044CC)
-                    else -> Color.Transparent
-                }
-                if (color != Color.Transparent) tiles.add(Triple(c, r, color))
-            }
-        }
-        Triple(gridCols, gridRows, tiles)
-    }
-    val mapCols = mapData.first
-    val mapRows = mapData.second
-    val allTiles = mapData.third
+    val gridCols = rawLines.maxOfOrNull { it.length } ?: 0
+    val gridRows = rawLines.size
 
     var start by remember { mutableStateOf<Pair<Int, Int>?>(null) }
     var end by remember { mutableStateOf<Pair<Int, Int>?>(null) }
     var selectedStart by remember { mutableStateOf<Pair<Int, Int>?>(null) }
     var selectedEnd by remember { mutableStateOf<Pair<Int, Int>?>(null) }
+    var animatedPath by remember { mutableStateOf<List<Pair<Int, Int>>?>(null) }
+    var visitedCells by remember { mutableStateOf<Set<Pair<Int, Int>>>(emptySet()) }
+
+    LaunchedEffect(start, end) {
+        if (start != null && end != null) {
+            animatedPath = null
+            visitedCells = emptySet()
+            val (pathResult, visitedResult) = astarWithSteps(grid, start!!.first, start!!.second, end!!.first, end!!.second)
+            if (pathResult != null) {
+                var currentVisited = emptySet<Pair<Int, Int>>()
+                for (cell in visitedResult) {
+                    currentVisited = currentVisited + cell
+                    visitedCells = currentVisited
+                    kotlinx.coroutines.delay(5)
+                }
+                var currentPath = emptyList<Pair<Int, Int>>()
+                for (cell in pathResult) {
+                    currentPath = currentPath + cell
+                    animatedPath = currentPath
+                    kotlinx.coroutines.delay(15)
+                }
+            }
+        } else {
+            animatedPath = null
+            visitedCells = emptySet()
+        }
+    }
 
     val path = remember(start, end) {
         if (start != null && end != null)
@@ -654,11 +688,11 @@ fun RouteScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
         ) {
             val bW = constraints.maxWidth.toFloat()
             val bH = constraints.maxHeight.toFloat()
-            val fit = minOf(bW / mapCols, bH / mapRows)
-            val mW = fit * mapCols
-            val mH = fit * mapRows
-            val cellW = mW / mapCols
-            val cellH = mH / mapRows
+            val fit = minOf(bW / gridCols, bH / gridRows)
+            val mW = fit * gridCols
+            val mH = fit * gridRows
+            val cellW = mW / gridCols
+            val cellH = mH / gridRows
 
             val density = androidx.compose.ui.platform.LocalDensity.current
             val mapWDp = with(density) { mW.toDp() }
@@ -720,34 +754,36 @@ fun RouteScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
                             modifier = Modifier.fillMaxSize()
                         )
                         Canvas(modifier = Modifier.fillMaxSize()) {
-                            val pathSet = path?.toSet() ?: emptySet()
-
-                            allTiles.forEach { (c, r, color) ->
-                                val cx = c * cellW
-                                val cy = r * cellH
-                                val center = Offset(cx + cellW / 2f, cy + cellH / 2f)
-
-                                if (color == Color(0x880044CC)) {
-                                    drawRoundRect(
-                                        Color(0x661A6FFF),
-                                        topLeft = Offset(cx, cy),
-                                        size = Size(cellW, cellH),
-                                        cornerRadius = CornerRadius(1.5f, 1.5f)
+                            visitedCells.forEach { (r, c) ->
+                                if (r in 0 until gridRows && c in 0 until gridCols) {
+                                    drawCircle(
+                                        Color(0xFF90CAF9).copy(alpha = 0.4f),
+                                        radius = minOf(cellW, cellH) * 0.5f,
+                                        center = Offset(c * cellW + cellW / 2f, r * cellH + cellH / 2f)
                                     )
-                                } else {
-                                    val radius = minOf(cellW, cellH) * 1.8f
-                                    drawCircle(Color.Black.copy(alpha = 0.12f), radius + 1.5f, Offset(center.x + 1f, center.y + 1.5f))
-                                    drawCircle(color, radius, center)
-                                    drawCircle(Color.White, radius * 0.38f, center)
                                 }
                             }
 
-                            pathSet.forEach { (r, c) ->
-                                drawCircle(
-                                    Color(0xFF1A6FFF),
-                                    radius = minOf(cellW, cellH) * 0.7f,
-                                    center = Offset(c * cellW + cellW / 2f, r * cellH + cellH / 2f)
-                                )
+                            CampusDictionary.forEach { (pos, info) ->
+                                val (c, r) = pos
+                                if (c !in 0 until gridCols || r !in 0 until gridRows) return@forEach
+                                val center = Offset(c * cellW + cellW / 2f, r * cellH + cellH / 2f)
+                                val radius = minOf(cellW, cellH) * 2.0f
+                                drawCircle(Color.Black.copy(alpha = 0.2f), radius + 1.5f, Offset(center.x + 1f, center.y + 1.5f))
+                                drawCircle(Color(info.color), radius, center)
+                                drawCircle(Color.White, radius * 0.4f, center)
+                            }
+
+                            animatedPath?.let { ap ->
+                                ap.forEach { (r, c) ->
+                                    if (r in 0 until gridRows && c in 0 until gridCols) {
+                                        drawCircle(
+                                            Color(0xFFFF6D00),
+                                            radius = minOf(cellW, cellH) * 0.7f,
+                                            center = Offset(c * cellW + cellW / 2f, r * cellH + cellH / 2f)
+                                        )
+                                    }
+                                }
                             }
 
                             selectedStart?.let { (c, r) ->
@@ -915,6 +951,7 @@ fun RouteScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
     }
 }
 
+@SuppressLint("UnusedBoxWithConstraintsScope")
 @Composable
 fun FoodScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
     val context = LocalContext.current
@@ -982,21 +1019,34 @@ fun FoodScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
             foodTypes.forEach { food ->
                 val label = FOOD_LABELS[food] ?: food
                 val isSel = food in selectedFoods
+                val available = places.filter { it.menu.contains(food) }.size
                 Surface(
                     shape = RoundedCornerShape(20.dp),
                     color = if (isSel) TsuBluePrimary else Color(0xFFEEF3FF),
-                    modifier = Modifier.height(36.dp).clickable {
+                    modifier = Modifier.height(40.dp).clickable {
                         selectedFoods = if (isSel) selectedFoods - food else selectedFoods + food
                         gaResult = null; routePaths = emptyList()
                     }
                 ) {
-                    Text(
-                        label, fontSize = 12.sp,
-                        color = if (isSel) Color.White else Color(0xFF666666),
-                        fontWeight = FontWeight.Medium,
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
-                    )
+                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)) {
+                        Text(
+                            label, fontSize = 11.sp,
+                            color = if (isSel) Color.White else Color(0xFF666666),
+                            fontWeight = FontWeight.Medium
+                        )
+                        Spacer(Modifier.width(4.dp))
+                        Surface(shape = RoundedCornerShape(8.dp), color = if (isSel) Color.White.copy(alpha = 0.3f) else Color(0xFFE0E0E0)) {
+                            Text("$available", fontSize = 10.sp, color = if (isSel) Color.White else Color(0xFF666666), fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp))
+                        }
+                    }
                 }
+            }
+        }
+
+        val filteredPlaces = places.filter { it.menu.any { m -> m in selectedFoods } }
+        if (filteredPlaces.isEmpty() && selectedFoods.isNotEmpty()) {
+            Surface(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp), color = Color(0xFFFFEBEE), shape = RoundedCornerShape(8.dp)) {
+                Text("Нет точек питания с выбранными типами еды", fontSize = 12.sp, color = Color(0xFFC62828), modifier = Modifier.padding(8.dp))
             }
         }
 
@@ -1045,18 +1095,20 @@ fun FoodScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
             ) {
                 Box(modifier = Modifier.fillMaxSize().graphicsLayer(scaleX = scale, scaleY = scale, translationX = offsetX, translationY = offsetY)) {
                     Box(modifier = Modifier.offset(x = mapStartXDp, y = mapStartYDp).size(width = mapWDp, height = mapHDp)) {
+                        Image(painter = painterResource(id = R.drawable.campus_map), contentDescription = null, contentScale = ContentScale.FillBounds, modifier = Modifier.fillMaxSize())
                         Canvas(modifier = Modifier.fillMaxSize()) {
                             for (row in 0 until gridRows) {
                                 for (col in 0 until gridCols) {
-                                    val color = when (grid[row][col]) {
-                                        0 -> Color(0xFF808080); 8 -> Color(0xFF0011FF).copy(alpha = 0.3f)
-                                        else -> Color(0xFFB0BEC5)
-                                    }
+                                    if (col >= grid[row].size) continue
+                                    val value = grid[row][col]
+                                    if (value == 0 || value == 8) continue
+                                    val color = Color.White.copy(alpha = 0.7f)
                                     drawRect(color, topLeft = Offset(col * cellW, row * cellH), size = Size(cellW, cellH))
                                 }
                             }
 
                             routePaths.forEach { (r, c) ->
+                                if (r in grid.indices && c in grid[r].indices)
                                 drawRect(Color(0xCCFF6D00), topLeft = Offset(c * cellW, r * cellH), size = Size(cellW, cellH))
                             }
 
@@ -1074,6 +1126,24 @@ fun FoodScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
                                 val rad = minOf(cellW, cellH) * 3f
                                 drawCircle(Color.White, rad * 1.3f, center)
                                 drawCircle(Color(0xFF00C853), rad, center)
+                                drawCircle(Color.White, rad * 0.3f, center)
+                            }
+
+                            CampusDictionary.forEach { (pos, info) ->
+                                val (c, r) = pos
+                                if (c !in 0 until gridCols || r !in 0 until gridRows) return@forEach
+                                val center = Offset(c * cellW + cellW / 2f, r * cellH + cellH / 2f)
+                                val radius = minOf(cellW, cellH) * 1.5f
+                                drawCircle(Color(info.color).copy(alpha = 0.6f), radius, center)
+                                drawCircle(Color.White, radius * 0.4f, center)
+                            }
+
+                            places.forEachIndexed { i, place ->
+                                val center = Offset(place.col * cellW + cellW / 2f, place.row * cellH + cellH / 2f)
+                                val rad = minOf(cellW, cellH) * 2.5f
+                                val isOnRoute = gaResult?.route?.contains(i) == true
+                                drawCircle(Color.White, rad * 1.3f, center)
+                                drawCircle(if (isOnRoute) placeColors[i % placeColors.size] else Color(0xFF78909C), rad, center)
                                 drawCircle(Color.White, rad * 0.3f, center)
                             }
 
@@ -1136,6 +1206,7 @@ fun FoodScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
     }
 }
 
+@SuppressLint("UnusedBoxWithConstraintsScope")
 @Composable
 fun KMeansScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
     val context = LocalContext.current
@@ -1143,11 +1214,8 @@ fun KMeansScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
     val mapInfo = remember {
         val lines = context.assets.open("tsu_campus_matrix.txt").bufferedReader().use { it.readLines() }
         val grid = lines.map { line -> line.map { it.toString().toIntOrNull() ?: 0 }.toIntArray() }.toTypedArray()
-        val foodPts = mutableListOf<Pair<Int, Int>>()
-        for (r in lines.indices) for (c in lines[r].indices) {
-            if (lines[r][c] == '4') foodPts.add(c to r)
-        }
-        grid to foodPts
+        val points = CampusDictionary.keys.toList()
+        grid to points
     }
     val grid = mapInfo.first
     val defaultPoints = mapInfo.second
@@ -1252,13 +1320,14 @@ fun KMeansScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
             ) {
                 Box(modifier = Modifier.fillMaxSize().graphicsLayer(scaleX = scale, scaleY = scale, translationX = offsetX, translationY = offsetY)) {
                     Box(modifier = Modifier.offset(x = mapStartXDp, y = mapStartYDp).size(width = mapWDp, height = mapHDp)) {
+                        Image(painter = painterResource(id = R.drawable.campus_map), contentDescription = null, contentScale = ContentScale.FillBounds, modifier = Modifier.fillMaxSize())
                         Canvas(modifier = Modifier.fillMaxSize()) {
                             for (row in 0 until gridRows) {
                                 for (col in 0 until gridCols) {
-                                    val color = when (grid[row][col]) {
-                                        0 -> Color(0xFF808080); 8 -> Color(0xFF0011FF).copy(alpha = 0.3f)
-                                        else -> Color(0xFFB0BEC5)
-                                    }
+                                    if (col >= grid[row].size) continue
+                                    val value = grid[row][col]
+                                    if (value == 0 || value == 8) continue
+                                    val color = Color.White.copy(alpha = 0.7f)
                                     drawRect(color, topLeft = Offset(col * cellW, row * cellH), size = Size(cellW, cellH))
                                 }
                             }
@@ -1331,16 +1400,14 @@ fun KMeansScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
 fun CoworkingScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
     val context = LocalContext.current
 
+    val coworkingTypes = setOf("Коворкинг", "Учебный корпус", "Спорт")
+
     val mapInfo = remember {
         val lines = context.assets.open("tsu_campus_matrix.txt").bufferedReader().use { it.readLines() }
         val grid = lines.map { line -> line.map { it.toString().toIntOrNull() ?: 0 }.toIntArray() }.toTypedArray()
-        val landmarks = mutableListOf<Landmark>()
-        for (r in lines.indices) for (c in lines[r].indices) {
-            if (lines[r][c] == '6') {
-                val comfort = ((r * 31 + c) % 10) / 10.0 + 0.5
-                landmarks.add(Landmark(r, c, comfort))
-            }
-        }
+        val landmarks = CampusDictionary.filter { (pos, info) ->
+            info.type in coworkingTypes && pos.second in grid.indices && pos.first < grid.getOrNull(pos.second)?.size ?: 0
+        }.map { (pos, _) -> Landmark(pos.second, pos.first, 1.0) }
         Triple(grid, lines, landmarks)
     }
     val grid = mapInfo.first
@@ -1357,10 +1424,17 @@ fun CoworkingScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
     LaunchedEffect(antResult) {
         val res = antResult
         if (res != null && res.route.size >= 2) {
-            val stops = res.route.map { allLandmarks[selectedIdx.toList()[it]] }
             val paths = mutableListOf<Pair<Int, Int>>()
-            for (i in 0 until stops.size - 1) {
-                val seg = astar(grid, stops[i].row, stops[i].col, stops[i + 1].row, stops[i + 1].col)
+            for (i in 0 until res.route.size - 1) {
+                val fromIdx = selectedIdx.toList()[res.route[i]]
+                val toIdx = selectedIdx.toList()[res.route[i + 1]]
+                val from = allLandmarks.getOrNull(fromIdx) ?: continue
+                val to = allLandmarks.getOrNull(toIdx) ?: continue
+                val startRow = findNearestWalkable(grid, from.row, from.col)?.first ?: from.row
+                val startCol = findNearestWalkable(grid, from.row, from.col)?.second ?: from.col
+                val endRow = findNearestWalkable(grid, to.row, to.col)?.first ?: to.row
+                val endCol = findNearestWalkable(grid, to.row, to.col)?.second ?: to.col
+                val seg = astar(grid, startRow, startCol, endRow, endCol)
                 if (seg != null) paths.addAll(seg)
             }
             routePaths = paths
@@ -1380,7 +1454,7 @@ fun CoworkingScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
             Spacer(Modifier.width(14.dp))
             Column {
                 Text("Муравьиный алгоритм", fontSize = 18.sp, fontWeight = FontWeight.ExtraBold, color = Color(0xFF1A1A2E))
-                Text("Обход достопримечательностей", fontSize = 12.sp, color = Color.Gray)
+                Text("Ковооркинги", fontSize = 12.sp, color = Color.Gray)
             }
             Spacer(Modifier.weight(1f))
             if (selectedIdx.isNotEmpty() || antResult != null) {
@@ -1445,19 +1519,20 @@ fun CoworkingScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
             ) {
                 Box(modifier = Modifier.fillMaxSize().graphicsLayer(scaleX = scale, scaleY = scale, translationX = offsetX, translationY = offsetY)) {
                     Box(modifier = Modifier.offset(x = mapStartXDp, y = mapStartYDp).size(width = mapWDp, height = mapHDp)) {
+                        Image(painter = painterResource(id = R.drawable.campus_map), contentDescription = null, contentScale = ContentScale.FillBounds, modifier = Modifier.fillMaxSize())
                         Canvas(modifier = Modifier.fillMaxSize()) {
                             for (row in 0 until gridRows) {
                                 for (col in 0 until gridCols) {
-                                    val color = when (grid[row][col]) {
-                                        0 -> Color(0xFF808080)
-                                        8 -> Color(0xFF0011FF).copy(alpha = 0.3f)
-                                        else -> Color(0xFFB0BEC5)
-                                    }
+                                    if (col >= grid[row].size) continue
+                                    val value = grid[row][col]
+                                    if (value == 0 || value == 8) continue
+                                    val color = Color.White.copy(alpha = 0.7f)
                                     drawRect(color, topLeft = Offset(col * cellW, row * cellH), size = Size(cellW, cellH))
                                 }
                             }
 
                             routePaths.forEach { (r, c) ->
+                                if (r in grid.indices && c in grid[r].indices)
                                 drawRect(Color(0xCCFF6D00), topLeft = Offset(c * cellW, r * cellH), size = Size(cellW, cellH))
                             }
 
