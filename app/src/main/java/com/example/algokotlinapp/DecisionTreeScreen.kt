@@ -14,6 +14,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -129,11 +131,14 @@ fun DecisionTreeScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
                     fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = Color(0xFF1A1A2E),
                     modifier = Modifier.padding(top = 8.dp, bottom = 6.dp)
                 )
-                Row(
+                LazyRow(
                     horizontalArrangement = Arrangement.spacedBy(6.dp),
-                    modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState())
+                    modifier = Modifier.fillMaxWidth()
                 ) {
-                    attrValues[attr]?.forEach { value ->
+                    items(
+                        items = attrValues[attr].orEmpty(),
+                        key = { value -> "$attr:$value" }
+                    ) { value ->
                         val sel = selections[attr] == value
                         Surface(
                             shape = RoundedCornerShape(18.dp),
