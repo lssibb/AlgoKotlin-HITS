@@ -17,6 +17,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -31,13 +32,13 @@ fun MainMenuScreen(modifier: Modifier = Modifier, onNavigate: (String) -> Unit) 
     ) {
         Spacer(modifier = Modifier.height(0.dp))
         Image(painter = painterResource(id = R.drawable.tsulogo11), contentDescription = null, modifier = Modifier.size(350.dp))
-        Text("TSU.MyMap", fontSize = 40.sp, fontWeight = FontWeight.Bold, color = TsuBluePrimary, modifier = Modifier.padding(bottom = 1.dp))
-        Button(onClick = { onNavigate("Map") }, modifier = Modifier.fillMaxWidth(0.8f).padding(4.dp)) { Text("\uD83D\uDDFA\uFE0F Карта кампуса", fontSize = 16.sp) }
-        Button(onClick = { onNavigate("Route") }, modifier = Modifier.fillMaxWidth(0.8f).padding(4.dp)) { Text("\uD83E\uDDED Навигация (A*)", fontSize = 16.sp) }
-        Button(onClick = { onNavigate("Food") }, modifier = Modifier.fillMaxWidth(0.8f).padding(4.dp)) { Text("\uD83C\uDF54 Где поесть? (Генетика)", fontSize = 16.sp) }
-        Button(onClick = { onNavigate("KMeans") }, modifier = Modifier.fillMaxWidth(0.8f).padding(4.dp)) { Text("\uD83D\uDCCA Кластеризация (K-Means)", fontSize = 16.sp) }
-        Button(onClick = { onNavigate("Coworking") }, modifier = Modifier.fillMaxWidth(0.8f).padding(4.dp)) { Text("\uD83D\uDC1C Коворкинги (Муравьи)", fontSize = 16.sp) }
-        Button(onClick = { onNavigate("Tree") }, modifier = Modifier.fillMaxWidth(0.8f).padding(4.dp)) { Text("\uD83E\uDD57 Куда пойти поесть? (Дерево)", fontSize = 16.sp) }
-        Button(onClick = { onNavigate("NeuralNet") }, modifier = Modifier.fillMaxWidth(0.8f).padding(4.dp)) { Text("\uD83E\uDDE0 Оценка: Нейросеть", fontSize = 16.sp) }
+        Text(stringResource(R.string.app_title), fontSize = 40.sp, fontWeight = FontWeight.Bold, color = TsuBluePrimary, modifier = Modifier.padding(bottom = 1.dp))
+        Button(onClick = { onNavigate("Map") }, modifier = Modifier.fillMaxWidth(0.8f).padding(4.dp)) { Text(stringResource(R.string.menu_map), fontSize = 16.sp) }
+        Button(onClick = { onNavigate("Route") }, modifier = Modifier.fillMaxWidth(0.8f).padding(4.dp)) { Text(stringResource(R.string.menu_route), fontSize = 16.sp) }
+        Button(onClick = { onNavigate("Food") }, modifier = Modifier.fillMaxWidth(0.8f).padding(4.dp)) { Text(stringResource(R.string.menu_food), fontSize = 16.sp) }
+        Button(onClick = { onNavigate("KMeans") }, modifier = Modifier.fillMaxWidth(0.8f).padding(4.dp)) { Text(stringResource(R.string.menu_kmeans), fontSize = 16.sp) }
+        Button(onClick = { onNavigate("Coworking") }, modifier = Modifier.fillMaxWidth(0.8f).padding(4.dp)) { Text(stringResource(R.string.menu_coworking), fontSize = 16.sp) }
+        Button(onClick = { onNavigate("Tree") }, modifier = Modifier.fillMaxWidth(0.8f).padding(4.dp)) { Text(stringResource(R.string.menu_tree), fontSize = 16.sp) }
+        Button(onClick = { onNavigate("NeuralNet") }, modifier = Modifier.fillMaxWidth(0.8f).padding(4.dp)) { Text(stringResource(R.string.menu_neuralnet), fontSize = 16.sp) }
     }
 }

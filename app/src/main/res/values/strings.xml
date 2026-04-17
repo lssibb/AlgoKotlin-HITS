@@ -1,3 +1,101 @@
 <resources>
     <string name="app_name">AlgoKotlinApp</string>
+
+    <!-- Главное меню -->
+    <string name="app_title">TSU.MyMap</string>
+    <string name="menu_map">🗺️ Карта кампуса</string>
+    <string name="menu_route">🧭 Навигация (A*)</string>
+    <string name="menu_food">🍔 Где поесть? (Генетика)</string>
+    <string name="menu_kmeans">📊 Кластеризация (K-Means)</string>
+    <string name="menu_coworking">🐜 Коворкинги (Муравьи)</string>
+    <string name="menu_tree">🥗 Куда пойти поесть? (Дерево)</string>
+    <string name="menu_neuralnet">🧠 Оценка: Нейросеть</string>
+
+    <!-- Заголовки экранов -->
+    <string name="title_campus_map">Карта кампуса</string>
+    <string name="title_route">Навигация A*</string>
+    <string name="title_food">Где поесть?</string>
+    <string name="title_kmeans">Кластеризация</string>
+    <string name="title_coworking">Коворкинги</string>
+    <string name="title_tree">Куда пойти на обед</string>
+    <string name="title_neuralnet">Рисование цифры</string>
+    <string name="subtitle_tsu_tomsk">ТГУ · Томск</string>
+
+    <!-- Общие кнопки -->
+    <string name="btn_back">Назад</string>
+    <string name="btn_reset">Сброс</string>
+    <string name="btn_clear">Очистить</string>
+
+    <!-- A* RouteScreen -->
+    <string name="route_hint_start">Нажмите на карту, чтобы выбрать стартовую точку</string>
+    <string name="route_hint_end">Теперь выберите конечную точку маршрута</string>
+    <string name="route_step_start">① Старт</string>
+    <string name="route_step_start_done">✓ Старт</string>
+    <string name="route_step_end">② Финиш</string>
+    <string name="route_step_end_done">✓ Финиш</string>
+    <string name="route_found">Маршрут построен</string>
+    <string name="route_length">Длина: %1$d шагов</string>
+    <string name="route_steps">%1$d шагов</string>
+    <string name="legend_start">Старт</string>
+    <string name="legend_end">Финиш</string>
+    <string name="legend_path">Путь</string>
+
+    <!-- Карта кампуса -->
+    <string name="map_from">Откуда: [%1$d, %2$d]</string>
+    <string name="map_to">Куда: [%1$d, %2$d]</string>
+    <string name="map_route_found_steps">Маршрут найден! %1$d шагов</string>
+    <string name="map_route_not_found">Маршрут не найден</string>
+    <string name="map_select_start">Выберите начальную точку</string>
+    <string name="map_select_end">Выберите конечную точку</string>
+    <string name="map_action_route_here">Маршрут сюда</string>
+    <string name="map_action_from_here">Отсюда</string>
+    <string name="map_unknown_point">Точка [%1$d, %2$d]</string>
+    <string name="map_unknown_type">Неизвестный объект</string>
+    <string name="map_unknown_desc">Добавь информацию об этой точке в CampusDictionary.</string>
+
+    <!-- Где поесть (ГА) -->
+    <string name="food_btn_build">Построить маршрут (ГА)</string>
+    <string name="food_hint_start">Тапните на карту, чтобы задать стартовую точку</string>
+    <string name="food_select_food">Выберите хотя бы один тип еды</string>
+    <string name="food_no_places">Нет точек питания с выбранными типами еды</string>
+    <string name="food_start">Старт: [%1$d, %2$d]</string>
+    <string name="food_route_found">Маршрут найден!</string>
+    <string name="food_distance">Дистанция: %1$d шагов (~%2$s м)</string>
+    <string name="food_generations">Поколений ГА: %1$d, лучший фитнес: %2$s</string>
+
+    <!-- K-Means -->
+    <string name="kmeans_k_label">K:</string>
+    <string name="kmeans_btn_cluster">Кластеризовать</string>
+    <string name="kmeans_points_count">Точек: %1$d (еда: %2$d, свои: %3$d)</string>
+    <string name="kmeans_hint_tap">Тапните на карту, чтобы добавить/убрать точку</string>
+    <string name="kmeans_result_iterations">Кластеризация за %1$d итераций</string>
+    <string name="kmeans_cluster_info">Кластер %1$d: %2$d точек, центроид (%3$s, %4$s)</string>
+
+    <!-- Коворкинги (Муравьи) -->
+    <string name="coworking_hint">Тапните на бордовые точки (достопримечательности), чтобы выбрать маршрут</string>
+    <string name="coworking_selected">Выбрано локаций: %1$d</string>
+    <string name="coworking_btn_build">Построить маршрут (Муравьи)</string>
+    <string name="coworking_need_two">Выберите минимум 2 локации</string>
+    <string name="coworking_not_found">Маршрут не найден (точки недостижимы)</string>
+    <string name="coworking_iterations">Итераций: %1$d</string>
+    <string name="coworking_distance">Дистанция: %1$d шагов</string>
+
+    <!-- Нейросеть -->
+    <string name="nn_draw_prompt">Нарисуйте цифру</string>
+    <string name="nn_result">Результат: %1$d</string>
+    <string name="nn_btn_recognize">Распознать</string>
+
+    <!-- Дерево решений -->
+    <string name="tree_show">Показать дерево</string>
+    <string name="tree_hide">Скрыть дерево</string>
+    <string name="tree_sample_size">Выборка: %1$d записей</string>
+    <string name="tree_btn_classify">Получить рекомендацию</string>
+    <string name="tree_btn_fill">Заполни все поля (%1$d/%2$d)</string>
+    <string name="tree_recommendation">Рекомендация</string>
+    <string name="tree_path_title">Путь по дереву:</string>
+    <string name="tree_structure_title">Структура дерева (ID3)</string>
+
+    <!-- Универсальные (маршрут найден/не найден) -->
+    <string name="common_route_found">Маршрут найден!</string>
+    <string name="common_route_not_found">Маршрут не найден</string>
 </resources>

@@ -34,6 +34,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
@@ -90,7 +91,7 @@ fun KMeansScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
                 Text("←", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Bold)
             }
             Spacer(Modifier.width(14.dp))
-            Text("Кластеризация", fontSize = 18.sp, fontWeight = FontWeight.ExtraBold, color = Color(0xFF1A1A2E))
+            Text(stringResource(R.string.title_kmeans), fontSize = 18.sp, fontWeight = FontWeight.ExtraBold, color = Color(0xFF1A1A2E))
         }
 
         Row(
@@ -98,7 +99,7 @@ fun KMeansScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Text("K:", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+            Text(stringResource(R.string.kmeans_k_label), fontWeight = FontWeight.Bold, fontSize = 16.sp)
             Button(
                 onClick = { if (k > 2) { k--; result = null } },
                 modifier = Modifier.size(36.dp), contentPadding = PaddingValues(0.dp),
@@ -117,7 +118,7 @@ fun KMeansScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
                 onClick = { if (allPoints.size >= k) result = kmeans(allPoints, k) },
                 shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = TsuBluePrimary)
-            ) { Text("Кластеризовать", fontWeight = FontWeight.SemiBold, fontSize = 13.sp) }
+            ) { Text(stringResource(R.string.kmeans_btn_cluster), fontWeight = FontWeight.SemiBold, fontSize = 13.sp) }
         }
 
         BoxWithConstraints(
@@ -266,16 +267,16 @@ fun KMeansScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
                 Text(
-                    "Точек: ${allPoints.size} (еда: ${defaultPoints.size}, свои: ${userPoints.size})",
+                    stringResource(R.string.kmeans_points_count, allPoints.size, defaultPoints.size, userPoints.size),
                     fontSize = 13.sp, color = Color.Gray
                 )
-                Text("Тапните на карту, чтобы добавить/убрать точку", fontSize = 12.sp, color = Color.Gray)
+                Text(stringResource(R.string.kmeans_hint_tap), fontSize = 12.sp, color = Color.Gray)
                 if (result != null) {
                     Spacer(Modifier.height(4.dp))
-                    Text("Кластеризация за ${result!!.iterations} итераций", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = TsuBluePrimary)
+                    Text(stringResource(R.string.kmeans_result_iterations, result!!.iterations), fontSize = 14.sp, fontWeight = FontWeight.Bold, color = TsuBluePrimary)
                     result!!.centroids.forEachIndexed { i, (cx, cy) ->
                         val count = result!!.assignments.count { it == i }
-                        Text("Кластер ${i + 1}: $count точек, центроид (${"%.1f".format(cx)}, ${"%.1f".format(cy)})",
+                        Text(stringResource(R.string.kmeans_cluster_info, i + 1, count, "%.1f".format(cx), "%.1f".format(cy)),
                             fontSize = 12.sp, color = clusterColors[i % clusterColors.size], fontWeight = FontWeight.Medium)
                     }
                 }

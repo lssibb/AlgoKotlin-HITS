@@ -35,6 +35,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
@@ -105,14 +106,14 @@ fun FoodScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
                 Text("←", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Bold)
             }
             Spacer(Modifier.width(14.dp))
-            Text("Где поесть?", fontSize = 20.sp, fontWeight = FontWeight.ExtraBold, color = Color(0xFF1A1A2E))
+            Text(stringResource(R.string.title_food), fontSize = 20.sp, fontWeight = FontWeight.ExtraBold, color = Color(0xFF1A1A2E))
             Spacer(Modifier.weight(1f))
             if (gaResult != null) {
                 Button(
                     onClick = { gaResult = null; routePaths = emptyList(); startPoint = null },
                     shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEEF3FF), contentColor = TsuBluePrimary)
-                ) { Text("Сброс", fontWeight = FontWeight.SemiBold, fontSize = 12.sp) }
+                ) { Text(stringResource(R.string.btn_reset), fontWeight = FontWeight.SemiBold, fontSize = 12.sp) }
             }
         }
 
@@ -150,7 +151,7 @@ fun FoodScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
         val filteredPlaces = places.filter { it.menu.any { m -> m in selectedFoods } }
         if (filteredPlaces.isEmpty() && selectedFoods.isNotEmpty()) {
             Surface(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp), color = Color(0xFFFFEBEE), shape = RoundedCornerShape(8.dp)) {
-                Text("Нет точек питания с выбранными типами еды", fontSize = 12.sp, color = Color(0xFFC62828), modifier = Modifier.padding(8.dp))
+                Text(stringResource(R.string.food_no_places), fontSize = 12.sp, color = Color(0xFFC62828), modifier = Modifier.padding(8.dp))
             }
         }
 
@@ -315,9 +316,9 @@ fun FoodScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
                 if (startPoint == null) {
-                    Text("Тапните на карту, чтобы задать стартовую точку", fontSize = 13.sp, color = Color.Gray)
+                    Text(stringResource(R.string.food_hint_start), fontSize = 13.sp, color = Color.Gray)
                 } else if (gaResult == null) {
-                    Text("Старт: [${startPoint!!.second}, ${startPoint!!.first}]", fontSize = 14.sp, color = Color(0xFF00C853))
+                    Text(stringResource(R.string.food_start, startPoint!!.second, startPoint!!.first), fontSize = 14.sp, color = Color(0xFF00C853))
                     if (selectedFoods.isNotEmpty()) {
                         Spacer(Modifier.height(8.dp))
                         Button(
@@ -329,16 +330,16 @@ fun FoodScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
                             modifier = Modifier.fillMaxWidth().height(48.dp),
                             shape = RoundedCornerShape(14.dp),
                             colors = ButtonDefaults.buttonColors(containerColor = TsuBluePrimary)
-                        ) { Text("Построить маршрут (ГА)", fontWeight = FontWeight.SemiBold) }
+                        ) { Text(stringResource(R.string.food_btn_build), fontWeight = FontWeight.SemiBold) }
                     } else {
-                        Text("Выберите хотя бы один тип еды", fontSize = 13.sp, color = Color.Red)
+                        Text(stringResource(R.string.food_select_food), fontSize = 13.sp, color = Color.Red)
                     }
                 } else {
                     val res = gaResult!!
                     if (res.distance > 0) {
-                        Text("Маршрут найден!", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = TsuBluePrimary)
-                        Text("Дистанция: ${res.distance} шагов (~${"%.0f".format(res.distance * 0.3)} м)", fontSize = 14.sp, color = Color(0xFF666666))
-                        Text("Поколений ГА: ${res.generations}, лучший фитнес: ${res.bestPerGeneration.lastOrNull()}", fontSize = 12.sp, color = Color.Gray)
+                        Text(stringResource(R.string.food_route_found), fontSize = 16.sp, fontWeight = FontWeight.Bold, color = TsuBluePrimary)
+                        Text(stringResource(R.string.food_distance, res.distance, "%.0f".format(res.distance * 0.3)), fontSize = 14.sp, color = Color(0xFF666666))
+                        Text(stringResource(R.string.food_generations, res.generations, res.bestPerGeneration.lastOrNull().toString()), fontSize = 12.sp, color = Color.Gray)
                         Spacer(Modifier.height(4.dp))
                         res.route.forEachIndexed { idx, placeIdx ->
                             val p = places[placeIdx]
@@ -346,7 +347,7 @@ fun FoodScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
                                 fontSize = 13.sp, color = placeColors[placeIdx % placeColors.size], fontWeight = FontWeight.Medium)
                         }
                     } else {
-                        Text("Маршрут не найден", fontSize = 14.sp, color = Color.Red)
+                        Text(stringResource(R.string.common_route_not_found), fontSize = 14.sp, color = Color.Red)
                     }
                 }
             }

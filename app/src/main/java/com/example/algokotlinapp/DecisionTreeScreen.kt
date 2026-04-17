@@ -30,6 +30,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -100,7 +101,7 @@ fun DecisionTreeScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
             }
             Spacer(Modifier.width(14.dp))
             Column {
-                Text("Куда пойти на обед", fontSize = 18.sp, fontWeight = FontWeight.ExtraBold, color = Color(0xFF1A1A2E))
+                Text(stringResource(R.string.title_tree), fontSize = 18.sp, fontWeight = FontWeight.ExtraBold, color = Color(0xFF1A1A2E))
             }
             Spacer(Modifier.weight(1f))
             Surface(
@@ -109,7 +110,7 @@ fun DecisionTreeScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
                 modifier = Modifier.clickable { showTree = !showTree }
             ) {
                 Text(
-                    if (showTree) "Скрыть дерево" else "Показать дерево",
+                    if (showTree) stringResource(R.string.tree_hide) else stringResource(R.string.tree_show),
                     fontSize = 12.sp, color = TsuBluePrimary, fontWeight = FontWeight.SemiBold,
                     modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
                 )
@@ -119,7 +120,7 @@ fun DecisionTreeScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
         Column(
             modifier = Modifier.fillMaxWidth().weight(1f).verticalScroll(rememberScrollState()).padding(16.dp)
         ) {
-            Text("Выборка: ${rows.size} записей", fontSize = 12.sp, color = Color.Gray)
+            Text(stringResource(R.string.tree_sample_size, rows.size), fontSize = 12.sp, color = Color.Gray)
             Spacer(Modifier.height(12.dp))
 
             attributes.forEach { attr ->
@@ -168,8 +169,8 @@ fun DecisionTreeScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
                 colors = ButtonDefaults.buttonColors(containerColor = TsuBluePrimary)
             ) {
                 Text(
-                    if (selections.size == attributes.size) "Получить рекомендацию"
-                    else "Заполни все поля (${selections.size}/${attributes.size})",
+                    if (selections.size == attributes.size) stringResource(R.string.tree_btn_classify)
+                    else stringResource(R.string.tree_btn_fill, selections.size, attributes.size),
                     fontWeight = FontWeight.SemiBold
                 )
             }
@@ -183,13 +184,13 @@ fun DecisionTreeScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
-                        Text("Рекомендация", fontSize = 12.sp, color = Color.Gray)
+                        Text(stringResource(R.string.tree_recommendation), fontSize = 12.sp, color = Color.Gray)
                         Text(
                             path.result,
                             fontSize = 20.sp, fontWeight = FontWeight.Bold, color = TsuBluePrimary
                         )
                         Spacer(Modifier.height(12.dp))
-                        Text("Путь по дереву:", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = Color(0xFF1A1A2E))
+                        Text(stringResource(R.string.tree_path_title), fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = Color(0xFF1A1A2E))
                         Spacer(Modifier.height(6.dp))
                         path.steps.forEachIndexed { i, step ->
                             val attr = step.first
@@ -227,7 +228,7 @@ fun DecisionTreeScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Column(modifier = Modifier.padding(12.dp)) {
-                        Text("Структура дерева (ID3)", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = Color(0xFF1A1A2E))
+                        Text(stringResource(R.string.tree_structure_title), fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = Color(0xFF1A1A2E))
                         Spacer(Modifier.height(8.dp))
                         Box(modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState())) {
                             Text(

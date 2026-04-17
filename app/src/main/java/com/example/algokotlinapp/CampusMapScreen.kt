@@ -48,6 +48,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.CornerRadius
@@ -176,12 +177,12 @@ fun CampusMapScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
             Spacer(Modifier.width(14.dp))
             Column {
                 Text(
-                    "Карта кампуса",
+                    stringResource(R.string.title_campus_map),
                     fontSize = 20.sp,
                     fontWeight = FontWeight.ExtraBold,
                     color = Color(0xFF1A1A2E)
                 )
-                Text("ТГУ · Томск", fontSize = 12.sp, color = Color.Gray)
+                Text(stringResource(R.string.subtitle_tsu_tomsk), fontSize = 12.sp, color = Color.Gray)
             }
             Spacer(Modifier.weight(1f))
             if (routeStart != null || routeEnd != null) {
@@ -189,7 +190,7 @@ fun CampusMapScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
                     onClick = { routeStart = null; routeEnd = null },
                     shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEEF3FF), contentColor = TsuBluePrimary)
-                ) { Text("Сброс", fontWeight = FontWeight.SemiBold, fontSize = 12.sp) }
+                ) { Text(stringResource(R.string.btn_reset), fontWeight = FontWeight.SemiBold, fontSize = 12.sp) }
                 Spacer(Modifier.width(8.dp))
             }
             Surface(shape = RoundedCornerShape(10.dp), color = Color(0xFFEEF3FF)) {
@@ -377,21 +378,21 @@ fun CampusMapScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     if (routeStart != null) Text(
-                        "Откуда: [${routeStart!!.second}, ${routeStart!!.first}]",
+                        stringResource(R.string.map_from, routeStart!!.second, routeStart!!.first),
                         fontSize = 14.sp, color = Color(0xFF00C853), fontWeight = FontWeight.Medium
                     )
                     if (routeEnd != null) Text(
-                        "Куда: [${routeEnd!!.second}, ${routeEnd!!.first}]",
+                        stringResource(R.string.map_to, routeEnd!!.second, routeEnd!!.first),
                         fontSize = 14.sp, color = Color(0xFFE53935), fontWeight = FontWeight.Medium
                     )
                     if (routePath != null) Text(
-                        "Маршрут найден! ${routePath!!.size} шагов",
+                        stringResource(R.string.map_route_found_steps, routePath!!.size),
                         fontSize = 14.sp, fontWeight = FontWeight.Bold, color = TsuBluePrimary
                     ) else if (routeStart != null && routeEnd != null) Text(
-                        "Маршрут не найден",
+                        stringResource(R.string.map_route_not_found),
                         fontSize = 14.sp, color = Color.Red
                     ) else Text(
-                        if (routeStart == null) "Выберите начальную точку" else "Выберите конечную точку",
+                        if (routeStart == null) stringResource(R.string.map_select_start) else stringResource(R.string.map_select_end),
                         fontSize = 13.sp, color = Color.Gray
                     )
                 }
@@ -419,9 +420,9 @@ fun CampusMapScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
         ) {
             displayedLocation?.let { loc ->
                 val info = CampusDictionary[loc] ?: LocationInfo(
-                    "Точка [${loc.first}, ${loc.second}]",
-                    "Неизвестный объект",
-                    "Добавь информацию об этой точке в CampusDictionary.",
+                    stringResource(R.string.map_unknown_point, loc.first, loc.second),
+                    stringResource(R.string.map_unknown_type),
+                    stringResource(R.string.map_unknown_desc),
                     0xFF607D8B
                 )
                 Surface(
@@ -473,7 +474,7 @@ fun CampusMapScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
                                 modifier = Modifier.weight(1f).height(48.dp),
                                 shape = RoundedCornerShape(14.dp),
                                 colors = ButtonDefaults.buttonColors(containerColor = TsuBluePrimary)
-                            ) { Text("Маршрут сюда", fontWeight = FontWeight.SemiBold) }
+                            ) { Text(stringResource(R.string.map_action_route_here), fontWeight = FontWeight.SemiBold) }
                             OutlinedButton(
                                 onClick = {
                                     val nearest = findNearestWalkable(grid, loc.second, loc.first)
@@ -483,7 +484,7 @@ fun CampusMapScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
                                 modifier = Modifier.weight(1f).height(48.dp),
                                 shape = RoundedCornerShape(14.dp),
                                 border = BorderStroke(1.5.dp, TsuBluePrimary)
-                            ) { Text("Отсюда", fontWeight = FontWeight.SemiBold, color = TsuBluePrimary) }
+                            ) { Text(stringResource(R.string.map_action_from_here), fontWeight = FontWeight.SemiBold, color = TsuBluePrimary) }
                         }
                     }
                 }

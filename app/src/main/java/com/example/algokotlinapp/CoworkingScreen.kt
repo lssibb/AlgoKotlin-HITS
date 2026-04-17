@@ -34,6 +34,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
@@ -112,7 +113,7 @@ fun CoworkingScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
             }
             Spacer(Modifier.width(14.dp))
             Column {
-                Text("Коворкинги", fontSize = 18.sp, fontWeight = FontWeight.ExtraBold, color = Color(0xFF1A1A2E))
+                Text(stringResource(R.string.title_coworking), fontSize = 18.sp, fontWeight = FontWeight.ExtraBold, color = Color(0xFF1A1A2E))
             }
             Spacer(Modifier.weight(1f))
             if (selectedIdx.isNotEmpty() || antResult != null) {
@@ -124,7 +125,7 @@ fun CoworkingScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
                     }
                 ) {
                     Text(
-                        "Сброс", fontSize = 13.sp, fontWeight = FontWeight.SemiBold,
+                        stringResource(R.string.btn_reset), fontSize = 13.sp, fontWeight = FontWeight.SemiBold,
                         color = Color(0xFFCC3333),
                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
                     )
@@ -273,10 +274,10 @@ fun CoworkingScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
                 if (selectedIdx.isEmpty()) {
-                    Text("Тапните на бордовые точки (достопримечательности), чтобы выбрать маршрут",
+                    Text(stringResource(R.string.coworking_hint),
                         fontSize = 13.sp, color = Color.Gray)
                 } else {
-                    Text("Выбрано локаций: ${selectedIdx.size}", fontSize = 14.sp, color = Color(0xFF900B09), fontWeight = FontWeight.Medium)
+                    Text(stringResource(R.string.coworking_selected, selectedIdx.size), fontSize = 14.sp, color = Color(0xFF900B09), fontWeight = FontWeight.Medium)
                     if (antResult == null) {
                         if (selectedIdx.size >= 2) {
                             Spacer(Modifier.height(8.dp))
@@ -288,16 +289,16 @@ fun CoworkingScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
                                 modifier = Modifier.fillMaxWidth().height(48.dp),
                                 shape = RoundedCornerShape(14.dp),
                                 colors = ButtonDefaults.buttonColors(containerColor = TsuBluePrimary)
-                            ) { Text("Построить маршрут (Муравьи)", fontWeight = FontWeight.SemiBold) }
+                            ) { Text(stringResource(R.string.coworking_btn_build), fontWeight = FontWeight.SemiBold) }
                         } else {
-                            Text("Выберите минимум 2 локации", fontSize = 12.sp, color = Color.Red)
+                            Text(stringResource(R.string.coworking_need_two), fontSize = 12.sp, color = Color.Red)
                         }
                     } else {
                         val res = antResult!!
                         if (res.distance > 0) {
-                            Text("Маршрут найден!", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = TsuBluePrimary)
-                            Text("Дистанция: ${res.distance} шагов", fontSize = 13.sp, color = Color(0xFF666666))
-                            Text("Итераций: ${res.iterations}", fontSize = 12.sp, color = Color.Gray)
+                            Text(stringResource(R.string.common_route_found), fontSize = 16.sp, fontWeight = FontWeight.Bold, color = TsuBluePrimary)
+                            Text(stringResource(R.string.coworking_distance, res.distance), fontSize = 13.sp, color = Color(0xFF666666))
+                            Text(stringResource(R.string.coworking_iterations, res.iterations), fontSize = 12.sp, color = Color.Gray)
                             val selList = selectedIdx.toList()
                             res.route.forEachIndexed { ord, idxInSel ->
                                 val lm = allLandmarks[selList[idxInSel]]
@@ -305,7 +306,7 @@ fun CoworkingScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
                                     fontSize = 12.sp, color = Color(0xFF900B09))
                             }
                         } else {
-                            Text("Маршрут не найден (точки недостижимы)", fontSize = 14.sp, color = Color.Red)
+                            Text(stringResource(R.string.coworking_not_found), fontSize = 14.sp, color = Color.Red)
                         }
                     }
                 }

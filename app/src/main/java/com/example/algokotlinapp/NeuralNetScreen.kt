@@ -19,6 +19,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.input.pointer.pointerInput
@@ -99,9 +100,9 @@ fun NeuralNetScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
     val nativeNet = remember { try { NativeInference(context) } catch (e: Exception) { null } }
 
     Column(modifier = modifier.fillMaxSize().padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-        Button(onClick = onBack, modifier = Modifier.align(Alignment.Start)) { Text("Назад") }
-        Text("Рисование цифры", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = TsuBluePrimary)
-        Text(if (prediction != null) "Результат: $prediction" else "Нарисуйте цифру", fontSize = 18.sp)
+        Button(onClick = onBack, modifier = Modifier.align(Alignment.Start)) { Text(stringResource(R.string.btn_back)) }
+        Text(stringResource(R.string.title_neuralnet), fontSize = 24.sp, fontWeight = FontWeight.Bold, color = TsuBluePrimary)
+        Text(if (prediction != null) stringResource(R.string.nn_result, prediction!!) else stringResource(R.string.nn_draw_prompt), fontSize = 18.sp)
         Box(
             modifier = Modifier.size(300.dp).border(2.dp, PixelBorder).background(PixelEmpty)
                 .pointerInput(Unit) {
@@ -130,7 +131,7 @@ fun NeuralNetScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
                 for (i in pixels.indices) if (pixels[i]) drawRect(PixelFilled, topLeft = Offset((i % gridSize) * cw, (i / gridSize) * ch), size = Size(cw, ch))
             }
         }
-        Button(onClick = { prediction = nativeNet?.predict(centerAndFlattenImage(pixels.toList(), gridSize)) }, modifier = Modifier.padding(top = 16.dp)) { Text("Распознать") }
-        OutlinedButton(onClick = { pixels.fill(false); prediction = null }) { Text("Очистить") }
+        Button(onClick = { prediction = nativeNet?.predict(centerAndFlattenImage(pixels.toList(), gridSize)) }, modifier = Modifier.padding(top = 16.dp)) { Text(stringResource(R.string.nn_btn_recognize)) }
+        OutlinedButton(onClick = { pixels.fill(false); prediction = null }) { Text(stringResource(R.string.btn_clear)) }
     }
 }

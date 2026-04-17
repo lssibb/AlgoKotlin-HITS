@@ -43,6 +43,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
@@ -143,12 +144,12 @@ fun RouteScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
             Spacer(Modifier.width(14.dp))
             Column {
                 Text(
-                    "Навигация A*",
+                    stringResource(R.string.title_route),
                     fontSize = 20.sp,
                     fontWeight = FontWeight.ExtraBold,
                     color = Color(0xFF1A1A2E)
                 )
-                Text("ТГУ · Томск", fontSize = 12.sp, color = Color.Gray)
+                Text(stringResource(R.string.subtitle_tsu_tomsk), fontSize = 12.sp, color = Color.Gray)
             }
             Spacer(Modifier.weight(1f))
             if (start != null || end != null) {
@@ -158,7 +159,7 @@ fun RouteScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
                     modifier = Modifier.clickable { start = null; end = null; selectedStart = null; selectedEnd = null }
                 ) {
                     Text(
-                        "Сброс",
+                        stringResource(R.string.btn_reset),
                         fontSize = 13.sp,
                         fontWeight = FontWeight.SemiBold,
                         color = Color(0xFFCC3333),
@@ -183,7 +184,7 @@ fun RouteScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
                     color = if (start != null) Color(0xFF00AA55) else if (step == 0) TsuBluePrimary else Color(0xFFE0E0E0)
                 ) {
                     Text(
-                        if (start != null) "✓ Старт" else "① Старт",
+                        if (start != null) stringResource(R.string.route_step_start_done) else stringResource(R.string.route_step_start),
                         fontSize = 12.sp,
                         fontWeight = FontWeight.SemiBold,
                         color = if (start != null || step == 0) Color.White else Color(0xFF888888),
@@ -196,7 +197,7 @@ fun RouteScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
                     color = if (end != null) Color(0xFFCC3333) else if (step == 1) TsuBluePrimary else Color(0xFFE0E0E0)
                 ) {
                     Text(
-                        if (end != null) "✓ Финиш" else "② Финиш",
+                        if (end != null) stringResource(R.string.route_step_end_done) else stringResource(R.string.route_step_end),
                         fontSize = 12.sp,
                         fontWeight = FontWeight.SemiBold,
                         color = if (end != null || step == 1) Color.White else Color(0xFF888888),
@@ -206,7 +207,7 @@ fun RouteScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
                 if (path != null) {
                     Spacer(Modifier.weight(1f))
                     Text(
-                        "${path.size} шагов",
+                        stringResource(R.string.route_steps, path.size),
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
                         color = TsuBluePrimary
@@ -402,7 +403,7 @@ fun RouteScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
                         shadowElevation = 4.dp
                     ) {
                         Text(
-                            "Нажмите на карту, чтобы выбрать стартовую точку",
+                            stringResource(R.string.route_hint_start),
                             fontSize = 12.sp,
                             color = Color.White,
                             fontWeight = FontWeight.Medium,
@@ -422,7 +423,7 @@ fun RouteScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
                         shadowElevation = 4.dp
                     ) {
                         Text(
-                            "Теперь выберите конечную точку маршрута",
+                            stringResource(R.string.route_hint_end),
                             fontSize = 12.sp,
                             color = Color.White,
                             fontWeight = FontWeight.Medium,
@@ -458,8 +459,8 @@ fun RouteScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
                         }
                         Spacer(Modifier.width(12.dp))
                         Column(modifier = Modifier.weight(1f)) {
-                            Text("Маршрут построен", fontSize = 17.sp, fontWeight = FontWeight.Bold, color = Color(0xFF1A1A2E))
-                            Text("Длина: ${path?.size ?: 0} шагов", fontSize = 13.sp, color = TsuBluePrimary, fontWeight = FontWeight.Medium)
+                            Text(stringResource(R.string.route_found), fontSize = 17.sp, fontWeight = FontWeight.Bold, color = Color(0xFF1A1A2E))
+                            Text(stringResource(R.string.route_length, path?.size ?: 0), fontSize = 13.sp, color = TsuBluePrimary, fontWeight = FontWeight.Medium)
                         }
                         IconButton(onClick = { start = null; end = null; selectedStart = null; selectedEnd = null }) {
                             Icon(Icons.Default.Close, contentDescription = null, tint = Color(0xFFBBBBBB))
@@ -470,17 +471,17 @@ fun RouteScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Box(modifier = Modifier.size(12.dp).background(Color(0xFF00AA55), RoundedCornerShape(6.dp)))
                             Spacer(Modifier.width(4.dp))
-                            Text("Старт", fontSize = 12.sp, color = Color(0xFF666666))
+                            Text(stringResource(R.string.legend_start), fontSize = 12.sp, color = Color(0xFF666666))
                         }
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Box(modifier = Modifier.size(12.dp).background(Color(0xFFCC3333), RoundedCornerShape(6.dp)))
                             Spacer(Modifier.width(4.dp))
-                            Text("Финиш", fontSize = 12.sp, color = Color(0xFF666666))
+                            Text(stringResource(R.string.legend_end), fontSize = 12.sp, color = Color(0xFF666666))
                         }
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Box(modifier = Modifier.size(12.dp).background(Color.White, RoundedCornerShape(6.dp)).border(1.dp, Color(0xFFAAAAAA), RoundedCornerShape(6.dp)))
                             Spacer(Modifier.width(4.dp))
-                            Text("Путь", fontSize = 12.sp, color = Color(0xFF666666))
+                            Text(stringResource(R.string.legend_path), fontSize = 12.sp, color = Color(0xFF666666))
                         }
                     }
                 }
