@@ -1,18 +1,17 @@
 package com.example.algokotlinapp
 import android.annotation.SuppressLint
 import android.os.Bundle
-import android.widget.Toast
 import androidx.activity.ComponentActivity
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.animation.*
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.*
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.launch
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
@@ -95,6 +94,7 @@ val LegendItems = listOf(
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
+        installSplashScreen()
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
@@ -135,18 +135,19 @@ class MainActivity : ComponentActivity() {
 fun MainMenuScreen(modifier: Modifier = Modifier, onNavigate: (String) -> Unit) {
     Column(
         modifier = modifier.fillMaxSize().verticalScroll(rememberScrollState()),
-        verticalArrangement = Arrangement.Center,
+        verticalArrangement = Arrangement.Top,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Image(painter = painterResource(id = R.drawable.tsulogo1), contentDescription = null, modifier = Modifier.size(160.dp).padding(bottom = 8.dp))
-        Text("TSU.MyMap", fontSize = 40.sp, fontWeight = FontWeight.Bold, color = TsuBluePrimary, modifier = Modifier.padding(bottom = 16.dp))
-        Button(onClick = { onNavigate("Map") }, modifier = Modifier.fillMaxWidth(0.8f).padding(4.dp)) { Text("Карта кампуса", fontSize = 18.sp) }
-        Button(onClick = { onNavigate("Route") }, modifier = Modifier.fillMaxWidth(0.8f).padding(4.dp)) { Text("Навигация (A*)", fontSize = 18.sp) }
-        Button(onClick = { onNavigate("Food") }, modifier = Modifier.fillMaxWidth(0.8f).padding(4.dp)) { Text("Где поесть? (Генетика)", fontSize = 18.sp) }
-        Button(onClick = { onNavigate("KMeans") }, modifier = Modifier.fillMaxWidth(0.8f).padding(4.dp)) { Text("Кластеризация (K-Means)", fontSize = 18.sp) }
-        Button(onClick = { onNavigate("Coworking") }, modifier = Modifier.fillMaxWidth(0.8f).padding(4.dp)) { Text("Коворкинги (Муравьи)", fontSize = 18.sp) }
-        Button(onClick = { onNavigate("Tree") }, modifier = Modifier.fillMaxWidth(0.8f).padding(4.dp)) { Text("Куда поесть (Дерево решений)", fontSize = 18.sp) }
-        Button(onClick = { onNavigate("NeuralNet") }, modifier = Modifier.fillMaxWidth(0.8f).padding(4.dp)) { Text("Оценка: Нейросеть", fontSize = 18.sp) }
+        Spacer(modifier = Modifier.height(0.dp))
+        Image(painter = painterResource(id = R.drawable.tsulogo11), contentDescription = null, modifier = Modifier.size(350.dp))
+        Text("TSU.MyMap", fontSize = 40.sp, fontWeight = FontWeight.Bold, color = TsuBluePrimary, modifier = Modifier.padding(bottom = 1.dp))
+        Button(onClick = { onNavigate("Map") }, modifier = Modifier.fillMaxWidth(0.8f).padding(4.dp)) { Text("\uD83D\uDDFA\uFE0F Карта кампуса", fontSize = 16.sp) }
+        Button(onClick = { onNavigate("Route") }, modifier = Modifier.fillMaxWidth(0.8f).padding(4.dp)) { Text("\uD83E\uDDED Навигация (A*)", fontSize = 16.sp) }
+        Button(onClick = { onNavigate("Food") }, modifier = Modifier.fillMaxWidth(0.8f).padding(4.dp)) { Text("\uD83C\uDF54 Где поесть? (Генетика)", fontSize = 16.sp) }
+        Button(onClick = { onNavigate("KMeans") }, modifier = Modifier.fillMaxWidth(0.8f).padding(4.dp)) { Text("\uD83D\uDCCA Кластеризация (K-Means)", fontSize = 16.sp) }
+        Button(onClick = { onNavigate("Coworking") }, modifier = Modifier.fillMaxWidth(0.8f).padding(4.dp)) { Text("\uD83D\uDC1C Коворкинги (Муравьи)", fontSize = 16.sp) }
+        Button(onClick = { onNavigate("Tree") }, modifier = Modifier.fillMaxWidth(0.8f).padding(4.dp)) { Text("\uD83E\uDD57 Куда пойти поесть? (Дерево)", fontSize = 16.sp) }
+        Button(onClick = { onNavigate("NeuralNet") }, modifier = Modifier.fillMaxWidth(0.8f).padding(4.dp)) { Text("\uD83E\uDDE0 Оценка: Нейросеть", fontSize = 16.sp) }
     }
 }
 
@@ -1003,7 +1004,7 @@ fun FoodScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
                 Text("←", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Bold)
             }
             Spacer(Modifier.width(14.dp))
-            Text("Где поесть? (ГА)", fontSize = 20.sp, fontWeight = FontWeight.ExtraBold, color = Color(0xFF1A1A2E))
+            Text("Где поесть?", fontSize = 20.sp, fontWeight = FontWeight.ExtraBold, color = Color(0xFF1A1A2E))
             Spacer(Modifier.weight(1f))
             if (gaResult != null) {
                 Button(
@@ -1291,7 +1292,7 @@ fun KMeansScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
                 Text("←", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Bold)
             }
             Spacer(Modifier.width(14.dp))
-            Text("Кластеризация (K-Means)", fontSize = 18.sp, fontWeight = FontWeight.ExtraBold, color = Color(0xFF1A1A2E))
+            Text("Кластеризация", fontSize = 18.sp, fontWeight = FontWeight.ExtraBold, color = Color(0xFF1A1A2E))
         }
 
         Row(
@@ -1543,8 +1544,7 @@ fun CoworkingScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
             }
             Spacer(Modifier.width(14.dp))
             Column {
-                Text("Муравьиный алгоритм", fontSize = 18.sp, fontWeight = FontWeight.ExtraBold, color = Color(0xFF1A1A2E))
-                Text("Ковооркинги", fontSize = 12.sp, color = Color.Gray)
+                Text("Коворкинги", fontSize = 18.sp, fontWeight = FontWeight.ExtraBold, color = Color(0xFF1A1A2E))
             }
             Spacer(Modifier.weight(1f))
             if (selectedIdx.isNotEmpty() || antResult != null) {
@@ -1906,8 +1906,7 @@ fun DecisionTreeScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
             }
             Spacer(Modifier.width(14.dp))
             Column {
-                Text("Дерево решений", fontSize = 18.sp, fontWeight = FontWeight.ExtraBold, color = Color(0xFF1A1A2E))
-                Text("Куда пойти на обед", fontSize = 12.sp, color = Color.Gray)
+                Text("Куда пойти на обед", fontSize = 18.sp, fontWeight = FontWeight.ExtraBold, color = Color(0xFF1A1A2E))
             }
             Spacer(Modifier.weight(1f))
             Surface(
