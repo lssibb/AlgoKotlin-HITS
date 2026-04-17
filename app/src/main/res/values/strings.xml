@@ -98,4 +98,6 @@
     <!-- Универсальные (маршрут найден/не найден) -->
     <string name="common_route_found">Маршрут найден!</string>
     <string name="common_route_not_found">Маршрут не найден</string>
+    <string name="common_computing">Считаем…</string>
+    <string name="common_recognizing">Распознаём…</string>
 </resources>

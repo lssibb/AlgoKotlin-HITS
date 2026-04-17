@@ -8,7 +8,10 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -16,7 +19,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.graphics.Color
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -97,6 +105,8 @@ fun NeuralNetScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
     val pixels = remember { mutableStateListOf(*Array(gridSize * gridSize) { false }) }
     val context = LocalContext.current
     var prediction by remember { mutableStateOf<Int?>(null) }
+    var isRunning by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
     val nativeNet = remember { try { NativeInference(context) } catch (e: Exception) { null } }
 
     Column(modifier = modifier.fillMaxSize().padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
@@ -131,7 +141,30 @@ fun NeuralNetScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
                 for (i in pixels.indices) if (pixels[i]) drawRect(PixelFilled, topLeft = Offset((i % gridSize) * cw, (i / gridSize) * ch), size = Size(cw, ch))
             }
         }
-        Button(onClick = { prediction = nativeNet?.predict(centerAndFlattenImage(pixels.toList(), gridSize)) }, modifier = Modifier.padding(top = 16.dp)) { Text(stringResource(R.string.nn_btn_recognize)) }
+        Button(
+            onClick = {
+                if (isRunning) return@Button
+                val snapshot = pixels.toList()
+                isRunning = true
+                scope.launch {
+                    val result = withContext(Dispatchers.Default) {
+                        nativeNet?.predict(centerAndFlattenImage(snapshot, gridSize))
+                    }
+                    prediction = result
+                    isRunning = false
+                }
+            },
+            enabled = !isRunning,
+            modifier = Modifier.padding(top = 16.dp)
+        ) {
+            if (isRunning) {
+                CircularProgressIndicator(color = Color.White, strokeWidth = 2.dp, modifier = Modifier.size(18.dp))
+                Spacer(Modifier.width(8.dp))
+                Text(stringResource(R.string.common_recognizing))
+            } else {
+                Text(stringResource(R.string.nn_btn_recognize))
+            }
+        }
         OutlinedButton(onClick = { pixels.fill(false); prediction = null }) { Text(stringResource(R.string.btn_clear)) }
     }
 }

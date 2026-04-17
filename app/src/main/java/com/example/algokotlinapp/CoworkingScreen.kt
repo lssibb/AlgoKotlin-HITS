@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -31,7 +32,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -76,6 +81,8 @@ fun CoworkingScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
     var selectedIdx by remember { mutableStateOf(setOf<Int>()) }
     var antResult by remember { mutableStateOf<AntResult?>(null) }
     var routePaths by remember { mutableStateOf<List<Pair<Int, Int>>>(emptyList()) }
+    var isRunning by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
 
     var scale by remember { mutableFloatStateOf(3f) }
     var offsetX by remember { mutableFloatStateOf(0f) }
@@ -283,13 +290,32 @@ fun CoworkingScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
                             Spacer(Modifier.height(8.dp))
                             Button(
                                 onClick = {
+                                    if (isRunning) return@Button
                                     val chosen = selectedIdx.toList().map { allLandmarks[it] }
-                                    antResult = antColonyTSP(chosen, grid)
+                                    isRunning = true
+                                    scope.launch {
+                                        val res = withContext(Dispatchers.Default) { antColonyTSP(chosen, grid) }
+                                        antResult = res
+                                        isRunning = false
+                                    }
                                 },
+                                enabled = !isRunning,
                                 modifier = Modifier.fillMaxWidth().height(48.dp),
                                 shape = RoundedCornerShape(14.dp),
                                 colors = ButtonDefaults.buttonColors(containerColor = TsuBluePrimary)
-                            ) { Text(stringResource(R.string.coworking_btn_build), fontWeight = FontWeight.SemiBold) }
+                            ) {
+                                if (isRunning) {
+                                    CircularProgressIndicator(
+                                        color = Color.White,
+                                        strokeWidth = 2.dp,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                    Spacer(Modifier.width(10.dp))
+                                    Text(stringResource(R.string.common_computing), fontWeight = FontWeight.SemiBold)
+                                } else {
+                                    Text(stringResource(R.string.coworking_btn_build), fontWeight = FontWeight.SemiBold)
+                                }
+                            }
                         } else {
                             Text(stringResource(R.string.coworking_need_two), fontSize = 12.sp, color = Color.Red)
                         }
