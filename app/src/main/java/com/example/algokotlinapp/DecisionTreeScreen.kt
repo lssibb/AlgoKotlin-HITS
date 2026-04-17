@@ -14,8 +14,10 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -197,28 +199,35 @@ fun DecisionTreeScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
                         Spacer(Modifier.height(12.dp))
                         Text(stringResource(R.string.tree_path_title), fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = Color(0xFF1A1A2E))
                         Spacer(Modifier.height(6.dp))
-                        path.steps.forEachIndexed { i, step ->
-                            val attr = step.first
-                            val value = step.second
-                            val outcome = step.third
-                            Row(
-                                modifier = Modifier.padding(vertical = 2.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Surface(
-                                    shape = RoundedCornerShape(8.dp),
-                                    color = Color(0xFFEEF3FF),
-                                    modifier = Modifier.size(24.dp)
-                                ) {
-                                    Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
-                                        Text("${i + 1}", fontSize = 11.sp, color = TsuBluePrimary, fontWeight = FontWeight.Bold)
+                        Box(modifier = Modifier.fillMaxWidth().height(250.dp)) {
+                            LazyColumn(modifier = Modifier.fillMaxSize()) {
+                                itemsIndexed(
+                                    items = path.steps,
+                                    key = { i, step -> "${step.first}:${step.second}:$i" }
+                                ) { i, step ->
+                                    val attr = step.first
+                                    val value = step.second
+                                    val outcome = step.third
+                                    Row(
+                                        modifier = Modifier.padding(vertical = 2.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Surface(
+                                            shape = RoundedCornerShape(8.dp),
+                                            color = Color(0xFFEEF3FF),
+                                            modifier = Modifier.size(24.dp)
+                                        ) {
+                                            Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
+                                                Text("${i + 1}", fontSize = 11.sp, color = TsuBluePrimary, fontWeight = FontWeight.Bold)
+                                            }
+                                        }
+                                        Spacer(Modifier.width(8.dp))
+                                        Text(
+                                            "${attrLabels[attr] ?: attr} = ${valueLabels[value] ?: value}  →  $outcome",
+                                            fontSize = 12.sp, color = Color(0xFF444444)
+                                        )
                                     }
                                 }
-                                Spacer(Modifier.width(8.dp))
-                                Text(
-                                    "${attrLabels[attr] ?: attr} = ${valueLabels[value] ?: value}  →  $outcome",
-                                    fontSize = 12.sp, color = Color(0xFF444444)
-                                )
                             }
                         }
                     }
