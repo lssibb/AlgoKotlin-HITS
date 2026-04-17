@@ -1,5 +1,6 @@
 package com.example.algokotlinapp
 
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -8,6 +9,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -34,13 +36,21 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
+import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.algokotlinapp.algorithms.DecisionPath
+import com.example.algokotlinapp.algorithms.TreeNode
 import com.example.algokotlinapp.algorithms.buildDecisionTree
 import com.example.algokotlinapp.algorithms.classify
 import com.example.algokotlinapp.algorithms.parseCsv
@@ -94,6 +104,7 @@ fun DecisionTreeScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
     val selections = remember { mutableStateMapOf<String, String>() }
     var result by remember { mutableStateOf<DecisionPath?>(null) }
     var showTree by remember { mutableStateOf(false) }
+    var graphMode by remember { mutableStateOf(false) }
 
     Column(modifier = modifier.fillMaxSize().background(Color(0xFFF0F2F5))) {
         Row(
@@ -242,20 +253,242 @@ fun DecisionTreeScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Column(modifier = Modifier.padding(12.dp)) {
-                        Text(stringResource(R.string.tree_structure_title), fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = Color(0xFF1A1A2E))
-                        Spacer(Modifier.height(8.dp))
-                        Box(modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState())) {
-                            Text(
-                                treeToText(tree),
-                                fontSize = 10.sp,
-                                color = Color(0xFF444444),
-                                fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
+                        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+                            Text(stringResource(R.string.tree_structure_title), fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = Color(0xFF1A1A2E))
+                            Spacer(Modifier.weight(1f))
+                            TreeModeToggle(
+                                graphMode = graphMode,
+                                onModeChange = { graphMode = it }
                             )
+                        }
+                        Spacer(Modifier.height(8.dp))
+                        if (graphMode) {
+                            TreeCanvas(tree = tree, attrLabels = attrLabels, valueLabels = valueLabels)
+                        } else {
+                            Box(modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState())) {
+                                Text(
+                                    treeToText(tree),
+                                    fontSize = 10.sp,
+                                    color = Color(0xFF444444),
+                                    fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
+                                )
+                            }
                         }
                     }
                 }
             }
             Spacer(Modifier.height(24.dp))
+        }
+    }
+}
+
+@Composable
+private fun TreeModeToggle(graphMode: Boolean, onModeChange: (Boolean) -> Unit) {
+    Row(
+        modifier = Modifier
+            .background(Color(0xFFEEF3FF), RoundedCornerShape(10.dp))
+            .padding(3.dp)
+    ) {
+        ModePill(
+            label = stringResource(R.string.tree_mode_text),
+            selected = !graphMode,
+            onClick = { onModeChange(false) }
+        )
+        ModePill(
+            label = stringResource(R.string.tree_mode_graph),
+            selected = graphMode,
+            onClick = { onModeChange(true) }
+        )
+    }
+}
+
+@Composable
+private fun ModePill(label: String, selected: Boolean, onClick: () -> Unit) {
+    Surface(
+        shape = RoundedCornerShape(8.dp),
+        color = if (selected) TsuBluePrimary else Color.Transparent,
+        modifier = Modifier.clickable(onClick = onClick)
+    ) {
+        Text(
+            label,
+            fontSize = 11.sp,
+            color = if (selected) Color.White else TsuBluePrimary,
+            fontWeight = FontWeight.SemiBold,
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)
+        )
+    }
+}
+
+@Composable
+private fun TreeCanvas(
+    tree: TreeNode,
+    attrLabels: Map<String, String>,
+    valueLabels: Map<String, String>
+) {
+    val density = LocalDensity.current
+    val leafW = with(density) { 110.dp.toPx() }
+    val nodeH = with(density) { 40.dp.toPx() }
+    val yStep = with(density) { 90.dp.toPx() }
+    val hPad = with(density) { 16.dp.toPx() }
+    val vPad = with(density) { 16.dp.toPx() }
+    val nodeTextPx = with(density) { 11.sp.toPx() }
+    val edgeTextPx = with(density) { 9.sp.toPx() }
+
+    val branchTextPaint = remember(nodeTextPx) {
+        android.graphics.Paint().apply {
+            color = android.graphics.Color.WHITE
+            textSize = nodeTextPx
+            textAlign = android.graphics.Paint.Align.CENTER
+            isAntiAlias = true
+            typeface = android.graphics.Typeface.DEFAULT_BOLD
+        }
+    }
+    val leafTextPaint = remember(nodeTextPx) {
+        android.graphics.Paint().apply {
+            color = 0xFF1A1A2E.toInt()
+            textSize = nodeTextPx
+            textAlign = android.graphics.Paint.Align.CENTER
+            isAntiAlias = true
+            typeface = android.graphics.Typeface.DEFAULT_BOLD
+        }
+    }
+    val edgeTextPaint = remember(edgeTextPx) {
+        android.graphics.Paint().apply {
+            color = 0xFF5A6B7A.toInt()
+            textSize = edgeTextPx
+            textAlign = android.graphics.Paint.Align.CENTER
+            isAntiAlias = true
+        }
+    }
+
+    val treeW = subtreeWidth(tree, leafW) + hPad * 2f
+    val canvasWidthDp = with(density) { treeW.toDp() }
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(400.dp)
+            .horizontalScroll(rememberScrollState())
+    ) {
+        Canvas(
+            modifier = Modifier
+                .width(canvasWidthDp)
+                .fillMaxHeight()
+        ) {
+            drawTreeNode(
+                node = tree,
+                centerX = hPad + subtreeWidth(tree, leafW) / 2f,
+                centerY = vPad + nodeH / 2f,
+                yStep = yStep,
+                leafW = leafW,
+                nodeH = nodeH,
+                branchTextPaint = branchTextPaint,
+                leafTextPaint = leafTextPaint,
+                edgeTextPaint = edgeTextPaint,
+                attrLabels = attrLabels,
+                valueLabels = valueLabels
+            )
+        }
+    }
+}
+
+private fun subtreeWidth(node: TreeNode, leafW: Float): Float = when (node) {
+    is TreeNode.Leaf -> leafW
+    is TreeNode.Branch -> node.children.values
+        .sumOf { subtreeWidth(it, leafW).toDouble() }
+        .toFloat()
+        .coerceAtLeast(leafW)
+}
+
+private fun DrawScope.drawTreeNode(
+    node: TreeNode,
+    centerX: Float,
+    centerY: Float,
+    yStep: Float,
+    leafW: Float,
+    nodeH: Float,
+    branchTextPaint: android.graphics.Paint,
+    leafTextPaint: android.graphics.Paint,
+    edgeTextPaint: android.graphics.Paint,
+    attrLabels: Map<String, String>,
+    valueLabels: Map<String, String>
+) {
+    val boxW = leafW - 20f
+    val corner = CornerRadius(14f, 14f)
+    val topLeft = Offset(centerX - boxW / 2f, centerY - nodeH / 2f)
+    val boxSize = Size(boxW, nodeH)
+
+    when (node) {
+        is TreeNode.Leaf -> {
+            drawRoundRect(
+                color = Color(0xFFD5E7FF),
+                topLeft = topLeft,
+                size = boxSize,
+                cornerRadius = corner
+            )
+            drawIntoCanvas { c ->
+                c.nativeCanvas.drawText(
+                    node.label,
+                    centerX,
+                    centerY + leafTextPaint.textSize / 3f,
+                    leafTextPaint
+                )
+            }
+        }
+        is TreeNode.Branch -> {
+            val childWidths = node.children.mapValues { (_, child) -> subtreeWidth(child, leafW) }
+            val totalChildrenW = childWidths.values.sum().coerceAtLeast(leafW)
+
+            drawRoundRect(
+                color = Color(0xFF4A90E2),
+                topLeft = topLeft,
+                size = boxSize,
+                cornerRadius = corner
+            )
+            drawIntoCanvas { c ->
+                val label = attrLabels[node.attribute] ?: node.attribute
+                c.nativeCanvas.drawText(
+                    label,
+                    centerX,
+                    centerY + branchTextPaint.textSize / 3f,
+                    branchTextPaint
+                )
+            }
+
+            var x = centerX - totalChildrenW / 2f
+            for ((value, child) in node.children) {
+                val w = childWidths[value] ?: leafW
+                val cx = x + w / 2f
+                val cy = centerY + yStep
+
+                drawLine(
+                    color = Color(0xFF9AA6B2),
+                    start = Offset(centerX, centerY + nodeH / 2f),
+                    end = Offset(cx, cy - nodeH / 2f),
+                    strokeWidth = 2f
+                )
+                drawIntoCanvas { c ->
+                    val midX = (centerX + cx) / 2f
+                    val midY = (centerY + nodeH / 2f + cy - nodeH / 2f) / 2f
+                    val lbl = valueLabels[value] ?: value
+                    c.nativeCanvas.drawText(lbl, midX, midY, edgeTextPaint)
+                }
+
+                drawTreeNode(
+                    node = child,
+                    centerX = cx,
+                    centerY = cy,
+                    yStep = yStep,
+                    leafW = leafW,
+                    nodeH = nodeH,
+                    branchTextPaint = branchTextPaint,
+                    leafTextPaint = leafTextPaint,
+                    edgeTextPaint = edgeTextPaint,
+                    attrLabels = attrLabels,
+                    valueLabels = valueLabels
+                )
+                x += w
+            }
         }
     }
 }

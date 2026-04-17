@@ -94,6 +94,8 @@
     <string name="tree_recommendation">Рекомендация</string>
     <string name="tree_path_title">Путь по дереву:</string>
     <string name="tree_structure_title">Структура дерева (ID3)</string>
+    <string name="tree_mode_text">Текст</string>
+    <string name="tree_mode_graph">Граф</string>
 
     <!-- Универсальные (маршрут найден/не найден) -->
     <string name="common_route_found">Маршрут найден!</string>
