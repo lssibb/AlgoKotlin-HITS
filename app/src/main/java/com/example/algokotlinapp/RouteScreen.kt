@@ -54,6 +54,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -67,6 +68,7 @@ import com.example.algokotlinapp.ui.theme.TsuBluePrimary
 @Composable
 fun RouteScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
     val context = LocalContext.current
+    val isLandscape = LocalConfiguration.current.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE
 
     val rawLines = remember {
         context.assets.open("tsu_campus_matrix.txt").bufferedReader().use { it.readLines() }
@@ -469,43 +471,62 @@ fun RouteScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
                 shadowElevation = 20.dp,
                 shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)
             ) {
-                Column(modifier = Modifier.padding(start = 24.dp, end = 24.dp, top = 16.dp, bottom = 24.dp)) {
-                    Box(
-                        modifier = Modifier
-                            .width(40.dp).height(4.dp)
-                            .background(Color(0xFFE0E0E0), RoundedCornerShape(2.dp))
-                            .align(Alignment.CenterHorizontally)
-                    )
-                    Spacer(Modifier.height(14.dp))
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Surface(shape = RoundedCornerShape(12.dp), color = Color(0xFFEEF9EE), modifier = Modifier.size(44.dp)) {
-                            Text("🗺️", fontSize = 20.sp, modifier = Modifier.padding(10.dp))
+                if (isLandscape) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 10.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Surface(shape = RoundedCornerShape(10.dp), color = Color(0xFFEEF9EE), modifier = Modifier.size(32.dp)) {
+                            Text("🗺️", fontSize = 16.sp, modifier = Modifier.padding(6.dp))
                         }
-                        Spacer(Modifier.width(12.dp))
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(stringResource(R.string.route_found), fontSize = 17.sp, fontWeight = FontWeight.Bold, color = Color(0xFF1A1A2E))
-                            Text(stringResource(R.string.route_length, path?.size ?: 0), fontSize = 13.sp, color = TsuBluePrimary, fontWeight = FontWeight.Medium)
-                        }
+                        Spacer(Modifier.width(10.dp))
+                        Text(stringResource(R.string.route_found), fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color(0xFF1A1A2E))
+                        Spacer(Modifier.width(8.dp))
+                        Text(stringResource(R.string.route_length, path?.size ?: 0), fontSize = 13.sp, color = TsuBluePrimary, fontWeight = FontWeight.Medium)
+                        Spacer(Modifier.weight(1f))
                         IconButton(onClick = { start = null; end = null; selectedStart = null; selectedEnd = null }) {
                             Icon(Icons.Default.Close, contentDescription = null, tint = Color(0xFFBBBBBB))
                         }
                     }
-                    Spacer(Modifier.height(14.dp))
-                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                } else {
+                    Column(modifier = Modifier.padding(start = 24.dp, end = 24.dp, top = 16.dp, bottom = 24.dp)) {
+                        Box(
+                            modifier = Modifier
+                                .width(40.dp).height(4.dp)
+                                .background(Color(0xFFE0E0E0), RoundedCornerShape(2.dp))
+                                .align(Alignment.CenterHorizontally)
+                        )
+                        Spacer(Modifier.height(14.dp))
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Box(modifier = Modifier.size(12.dp).background(Color(0xFF00AA55), RoundedCornerShape(6.dp)))
-                            Spacer(Modifier.width(4.dp))
-                            Text(stringResource(R.string.legend_start), fontSize = 12.sp, color = Color(0xFF666666))
+                            Surface(shape = RoundedCornerShape(12.dp), color = Color(0xFFEEF9EE), modifier = Modifier.size(44.dp)) {
+                                Text("🗺️", fontSize = 20.sp, modifier = Modifier.padding(10.dp))
+                            }
+                            Spacer(Modifier.width(12.dp))
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(stringResource(R.string.route_found), fontSize = 17.sp, fontWeight = FontWeight.Bold, color = Color(0xFF1A1A2E))
+                                Text(stringResource(R.string.route_length, path?.size ?: 0), fontSize = 13.sp, color = TsuBluePrimary, fontWeight = FontWeight.Medium)
+                            }
+                            IconButton(onClick = { start = null; end = null; selectedStart = null; selectedEnd = null }) {
+                                Icon(Icons.Default.Close, contentDescription = null, tint = Color(0xFFBBBBBB))
+                            }
                         }
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Box(modifier = Modifier.size(12.dp).background(Color(0xFFCC3333), RoundedCornerShape(6.dp)))
-                            Spacer(Modifier.width(4.dp))
-                            Text(stringResource(R.string.legend_end), fontSize = 12.sp, color = Color(0xFF666666))
-                        }
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Box(modifier = Modifier.size(12.dp).background(Color.White, RoundedCornerShape(6.dp)).border(1.dp, Color(0xFFAAAAAA), RoundedCornerShape(6.dp)))
-                            Spacer(Modifier.width(4.dp))
-                            Text(stringResource(R.string.legend_path), fontSize = 12.sp, color = Color(0xFF666666))
+                        Spacer(Modifier.height(14.dp))
+                        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Box(modifier = Modifier.size(12.dp).background(Color(0xFF00AA55), RoundedCornerShape(6.dp)))
+                                Spacer(Modifier.width(4.dp))
+                                Text(stringResource(R.string.legend_start), fontSize = 12.sp, color = Color(0xFF666666))
+                            }
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Box(modifier = Modifier.size(12.dp).background(Color(0xFFCC3333), RoundedCornerShape(6.dp)))
+                                Spacer(Modifier.width(4.dp))
+                                Text(stringResource(R.string.legend_end), fontSize = 12.sp, color = Color(0xFF666666))
+                            }
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Box(modifier = Modifier.size(12.dp).background(Color.White, RoundedCornerShape(6.dp)).border(1.dp, Color(0xFFAAAAAA), RoundedCornerShape(6.dp)))
+                                Spacer(Modifier.width(4.dp))
+                                Text(stringResource(R.string.legend_path), fontSize = 12.sp, color = Color(0xFF666666))
+                            }
                         }
                     }
                 }
