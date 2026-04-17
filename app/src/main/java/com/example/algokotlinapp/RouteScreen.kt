@@ -116,7 +116,7 @@ fun RouteScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
         else null
     }
 
-    var scale by remember { mutableFloatStateOf(1f) }
+    var scale by remember { mutableFloatStateOf(3f) }
     var offsetX by remember { mutableFloatStateOf(0f) }
     var offsetY by remember { mutableFloatStateOf(0f) }
 

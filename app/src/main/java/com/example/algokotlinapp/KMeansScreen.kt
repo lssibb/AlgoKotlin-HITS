@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.Arrangement
@@ -48,6 +49,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.algokotlinapp.algorithms.DistanceMetric
 import com.example.algokotlinapp.algorithms.KMeansResult
 import com.example.algokotlinapp.algorithms.kmeans
 import com.example.algokotlinapp.ui.theme.TsuBluePrimary
@@ -68,6 +70,7 @@ fun KMeansScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
 
     var userPoints by remember { mutableStateOf(listOf<Pair<Int, Int>>()) }
     var k by remember { mutableStateOf(3) }
+    var metric by remember { mutableStateOf(DistanceMetric.EUCLIDEAN) }
     var result by remember { mutableStateOf<KMeansResult?>(null) }
 
     var scale by remember { mutableFloatStateOf(3f) }
@@ -115,10 +118,31 @@ fun KMeansScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
             ) { Text("+", fontSize = 18.sp, fontWeight = FontWeight.Bold) }
             Spacer(Modifier.weight(1f))
             Button(
-                onClick = { if (allPoints.size >= k) result = kmeans(allPoints, k) },
+                onClick = { if (allPoints.size >= k) result = kmeans(allPoints, k, metric = metric) },
                 shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = TsuBluePrimary)
             ) { Text(stringResource(R.string.kmeans_btn_cluster), fontWeight = FontWeight.SemiBold, fontSize = 13.sp) }
+        }
+
+        Row(
+            modifier = Modifier.fillMaxWidth().background(Color.White).padding(horizontal = 16.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            Text(
+                stringResource(R.string.kmeans_metric_label),
+                fontWeight = FontWeight.Bold, fontSize = 13.sp, color = Color(0xFF1A1A2E)
+            )
+            Spacer(Modifier.width(4.dp))
+            MetricChip(stringResource(R.string.kmeans_metric_euclidean), metric == DistanceMetric.EUCLIDEAN) {
+                metric = DistanceMetric.EUCLIDEAN; result = null
+            }
+            MetricChip(stringResource(R.string.kmeans_metric_manhattan), metric == DistanceMetric.MANHATTAN) {
+                metric = DistanceMetric.MANHATTAN; result = null
+            }
+            MetricChip(stringResource(R.string.kmeans_metric_chebyshev), metric == DistanceMetric.CHEBYSHEV) {
+                metric = DistanceMetric.CHEBYSHEV; result = null
+            }
         }
 
         BoxWithConstraints(
@@ -282,5 +306,22 @@ fun KMeansScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun MetricChip(label: String, selected: Boolean, onClick: () -> Unit) {
+    Surface(
+        shape = RoundedCornerShape(14.dp),
+        color = if (selected) TsuBluePrimary else Color(0xFFEEF3FF),
+        modifier = Modifier.clickable(onClick = onClick)
+    ) {
+        Text(
+            label,
+            fontSize = 11.sp,
+            color = if (selected) Color.White else TsuBluePrimary,
+            fontWeight = FontWeight.SemiBold,
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
+        )
     }
 }

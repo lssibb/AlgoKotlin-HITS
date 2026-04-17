@@ -1,5 +1,24 @@
 package com.example.algokotlinapp.algorithms
 
+import kotlin.math.abs
+import kotlin.math.max
+
+enum class DistanceMetric { EUCLIDEAN, MANHATTAN, CHEBYSHEV }
+
+private fun distance(
+    px: Double, py: Double,
+    cx: Double, cy: Double,
+    metric: DistanceMetric
+): Double {
+    val dx = px - cx
+    val dy = py - cy
+    return when (metric) {
+        DistanceMetric.EUCLIDEAN -> dx * dx + dy * dy
+        DistanceMetric.MANHATTAN -> abs(dx) + abs(dy)
+        DistanceMetric.CHEBYSHEV -> max(abs(dx), abs(dy))
+    }
+}
+
 data class KMeansResult(
     val centroids: List<Pair<Double, Double>>,
     val assignments: IntArray,
@@ -9,7 +28,8 @@ data class KMeansResult(
 fun kmeans(
     points: List<Pair<Int, Int>>,
     k: Int,
-    maxIterations: Int = 100
+    maxIterations: Int = 100,
+    metric: DistanceMetric = DistanceMetric.EUCLIDEAN
 ): KMeansResult {
     if (points.isEmpty() || k <= 0) return KMeansResult(emptyList(), intArrayOf(), 0)
     val actualK = minOf(k, points.size)
@@ -25,9 +45,7 @@ fun kmeans(
         val newAssignments = IntArray(points.size) { i ->
             val (px, py) = points[i]
             centroids.indices.minByOrNull { j ->
-                val dx = px - centroids[j].first
-                val dy = py - centroids[j].second
-                dx * dx + dy * dy
+                distance(px.toDouble(), py.toDouble(), centroids[j].first, centroids[j].second, metric)
             } ?: 0
         }
 

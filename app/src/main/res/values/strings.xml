@@ -3,13 +3,13 @@
 
     <!-- Главное меню -->
     <string name="app_title">TSU.MyMap</string>
-    <string name="menu_map">🗺️ Карта кампуса</string>
-    <string name="menu_route">🧭 Навигация (A*)</string>
-    <string name="menu_food">🍔 Где поесть? (Генетика)</string>
-    <string name="menu_kmeans">📊 Кластеризация (K-Means)</string>
-    <string name="menu_coworking">🐜 Коворкинги (Муравьи)</string>
-    <string name="menu_tree">🥗 Куда пойти поесть? (Дерево)</string>
-    <string name="menu_neuralnet">🧠 Оценка: Нейросеть</string>
+    <string name="menu_map">Карта кампуса</string>
+    <string name="menu_route">Навигация (A*)</string>
+    <string name="menu_food">Где поесть? (Генетика)</string>
+    <string name="menu_kmeans">Кластеризация (K-Means)</string>
+    <string name="menu_coworking">Коворкинги (Муравьи)</string>
+    <string name="menu_tree">Куда пойти поесть? (Дерево)</string>
+    <string name="menu_neuralnet">Оценка: Нейросеть</string>
 
     <!-- Заголовки экранов -->
     <string name="title_campus_map">Карта кампуса</string>
@@ -70,6 +70,10 @@
     <string name="kmeans_hint_tap">Тапните на карту, чтобы добавить/убрать точку</string>
     <string name="kmeans_result_iterations">Кластеризация за %1$d итераций</string>
     <string name="kmeans_cluster_info">Кластер %1$d: %2$d точек, центроид (%3$s, %4$s)</string>
+    <string name="kmeans_metric_label">Метрика:</string>
+    <string name="kmeans_metric_euclidean">Евклид</string>
+    <string name="kmeans_metric_manhattan">Манхэттен</string>
+    <string name="kmeans_metric_chebyshev">Чебышёв</string>
 
     <!-- Коворкинги (Муравьи) -->
     <string name="coworking_hint">Тапните на бордовые точки (достопримечательности), чтобы выбрать маршрут</string>
