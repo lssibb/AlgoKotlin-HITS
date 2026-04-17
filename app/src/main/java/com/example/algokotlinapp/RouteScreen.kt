@@ -30,10 +30,12 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -118,6 +120,27 @@ fun RouteScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
     var offsetX by remember { mutableFloatStateOf(0f) }
     var offsetY by remember { mutableFloatStateOf(0f) }
 
+    var showResetDialog by remember { mutableStateOf(false) }
+
+    if (showResetDialog) {
+        AlertDialog(
+            onDismissRequest = { showResetDialog = false },
+            title = { Text("Сбросить маршрут?") },
+            text = { Text("Выбранные точки старта и финиша будут очищены.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    start = null
+                    end = null
+                    selectedStart = null
+                    selectedEnd = null
+                    showResetDialog = false
+                }) { Text("Сбросить") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showResetDialog = false }) { Text("Отмена") }
+            }
+        )
+    }
 
     val step = when {
         start == null -> 0
@@ -156,7 +179,7 @@ fun RouteScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
                 Surface(
                     shape = RoundedCornerShape(10.dp),
                     color = Color(0xFFFFEEEE),
-                    modifier = Modifier.clickable { start = null; end = null; selectedStart = null; selectedEnd = null }
+                    modifier = Modifier.clickable { showResetDialog = true }
                 ) {
                     Text(
                         stringResource(R.string.btn_reset),
