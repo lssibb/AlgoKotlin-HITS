@@ -101,12 +101,6 @@ fun MainMenuScreen(modifier: Modifier = Modifier, onNavigate: (String) -> Unit) 
                 AboutItem("Муравьиный", "Обход коворкингов")
                 AboutItem("Дерево решений (ID3)", "Рекомендация заведения")
                 AboutItem("Нейросеть", "Распознавание цифр 50×50")
-                Spacer(modifier = Modifier.height(16.dp))
-                Text(
-                    "Модуль 2 · Алгоритмы прикладных вычислений",
-                    fontSize = 11.sp,
-                    color = Color.Gray
-                )
                 Spacer(modifier = Modifier.height(24.dp))
             }
         }

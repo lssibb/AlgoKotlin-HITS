@@ -29,6 +29,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
@@ -162,7 +163,7 @@ fun RouteScreen(modifier: Modifier = Modifier, onBack: () -> Unit) {
                     .size(40.dp)
                     .background(TsuBluePrimary, RoundedCornerShape(12.dp))
             ) {
-                Text("←", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null, tint = Color.White, modifier = Modifier.size(22.dp))
             }
             Spacer(Modifier.width(14.dp))
             Column {
