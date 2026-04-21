@@ -159,28 +159,28 @@ fun printGrid(grid: Array<IntArray>, path: List<Pair<Int, Int>>?) {
     println(sb)
 }
 
-fun runAstar() {
-    val grid = arrayOf(
-        intArrayOf(0, 0, 0, 0, 0, 0, 0, 0),
-        intArrayOf(0, 1, 1, 0, 0, 1, 1, 0),
-        intArrayOf(0, 1, 1, 0, 0, 1, 1, 0),
-        intArrayOf(0, 0, 0, 0, 0, 0, 0, 0),
-        intArrayOf(0, 0, 1, 1, 1, 1, 0, 0),
-        intArrayOf(0, 0, 0, 0, 0, 0, 0, 0),
-        intArrayOf(0, 1, 1, 0, 0, 1, 1, 0),
-        intArrayOf(0, 0, 0, 0, 0, 0, 0, 0),
-    )
-
-    println("=== A* — поиск маршрута до кафе ===")
-    println("S = вы,  E = кафе,  * = путь,  # = здание,  . = дорожка")
-    println()
-
-    val path = astar(grid, startX = 0, startY = 0, endX = 7, endY = 7)
-
-    if (path != null) {
-        println("Маршрут найден! Длина: ${path.size} шагов")
-        printGrid(grid, path)
-    } else {
-        println("Маршрут не найден — путь заблокирован")
-    }
-}
+//fun runAstar() {
+//    val grid = arrayOf(
+//        intArrayOf(0, 0, 0, 0, 0, 0, 0, 0),
+//        intArrayOf(0, 1, 1, 0, 0, 1, 1, 0),
+//        intArrayOf(0, 1, 1, 0, 0, 1, 1, 0),
+//        intArrayOf(0, 0, 0, 0, 0, 0, 0, 0),
+//        intArrayOf(0, 0, 1, 1, 1, 1, 0, 0),
+//        intArrayOf(0, 0, 0, 0, 0, 0, 0, 0),
+//        intArrayOf(0, 1, 1, 0, 0, 1, 1, 0),
+//        intArrayOf(0, 0, 0, 0, 0, 0, 0, 0),
+//    )
+//
+//    println("=== A* — поиск маршрута до кафе ===")
+//    println("S = вы,  E = кафе,  * = путь,  # = здание,  . = дорожка")
+//    println()
+//
+//    val path = astar(grid, startX = 0, startY = 0, endX = 7, endY = 7)
+//
+//    if (path != null) {
+//        println("Маршрут найден! Длина: ${path.size} шагов")
+//        printGrid(grid, path)
+//    } else {
+//        println("Маршрут не найден — путь заблокирован")
+//    }
+//}

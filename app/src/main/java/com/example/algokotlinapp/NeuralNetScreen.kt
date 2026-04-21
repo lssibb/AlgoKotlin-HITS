@@ -44,12 +44,15 @@ import java.nio.ByteOrder
 
 class NativeInference(private val context: android.content.Context) {
     private val inputSize = 2500
-    private val hiddenSize = 128
+    private val hiddenSize1 = 256
+    private val hiddenSize2 = 64
     private val outputSize = 10
-    private val W1 = loadFloatArray("w1.bin", hiddenSize * inputSize)
-    private val b1 = loadFloatArray("b1.bin", hiddenSize)
-    private val W2 = loadFloatArray("w2.bin", outputSize * hiddenSize)
-    private val b2 = loadFloatArray("b2.bin", outputSize)
+    private val W1 = loadFloatArray("w1.bin", hiddenSize1 * inputSize)
+    private val b1 = loadFloatArray("b1.bin", hiddenSize1)
+    private val W2 = loadFloatArray("w2.bin", hiddenSize2 * hiddenSize1)
+    private val b2 = loadFloatArray("b2.bin", hiddenSize2)
+    private val W3 = loadFloatArray("w3.bin", outputSize * hiddenSize2)
+    private val b3 = loadFloatArray("b3.bin", outputSize)
 
     private fun loadFloatArray(fileName: String, expectedSize: Int): FloatArray {
         val stream = context.assets.open(fileName)
@@ -60,39 +63,56 @@ class NativeInference(private val context: android.content.Context) {
     }
 
     fun predict(X: FloatArray): Int {
-        val Z1 = FloatArray(hiddenSize) { i ->
+        val h1 = FloatArray(hiddenSize1) { i ->
             var sum = b1[i]
             for (j in 0 until inputSize) sum += W1[i * inputSize + j] * X[j]
             if (sum > 0) sum else 0f
         }
-        val Z2 = FloatArray(outputSize) { i ->
+        val h2 = FloatArray(hiddenSize2) { i ->
             var sum = b2[i]
-            for (j in 0 until hiddenSize) sum += W2[i * hiddenSize + j] * Z1[j]
+            for (j in 0 until hiddenSize1) sum += W2[i * hiddenSize1 + j] * h1[j]
+            if (sum > 0) sum else 0f
+        }
+        val out = FloatArray(outputSize) { i ->
+            var sum = b3[i]
+            for (j in 0 until hiddenSize2) sum += W3[i * hiddenSize2 + j] * h2[j]
             sum
         }
-        return Z2.indices.maxByOrNull { Z2[it] } ?: 0
+        return out.indices.maxByOrNull { out[it] } ?: 0
     }
 }
 
 fun centerAndFlattenImage(pixels: List<Boolean>, gridSize: Int): FloatArray {
-    var minX = gridSize; var maxX = -1; var minY = gridSize; var maxY = -1
-    for (row in 0 until gridSize) {
-        for (col in 0 until gridSize) {
-            if (pixels[row * gridSize + col]) {
-                minX = minOf(minX, col); maxX = maxOf(maxX, col)
-                minY = minOf(minY, row); maxY = maxOf(maxY, row)
+    val inputGridSize = 50
+    var sumX = 0f; var sumY = 0f; var count = 0
+    for (row in 0 until inputGridSize) {
+        for (col in 0 until inputGridSize) {
+            if (pixels[row * inputGridSize + col]) {
+                sumX += col; sumY += row; count++
             }
         }
     }
     val result = FloatArray(gridSize * gridSize)
-    if (maxX < 0) return result
-    val offsetX = (gridSize - (maxX - minX + 1)) / 2 - minX
-    val offsetY = (gridSize - (maxY - minY + 1)) / 2 - minY
-    for (row in 0 until gridSize) {
-        for (col in 0 until gridSize) {
-            if (pixels[row * gridSize + col]) {
-                val nr = row + offsetY; val nc = col + offsetX
-                if (nr in 0 until gridSize && nc in 0 until gridSize) result[nr * gridSize + nc] = 1.0f
+    if (count == 0) return result
+    
+    val centerX = sumX / count
+    val centerY = sumY / count
+    val scale = minOf(gridSize.toFloat() / 30f, 1.5f)
+    val targetCenter = gridSize / 2f
+    val offsetX = targetCenter - centerX * scale
+    val offsetY = targetCenter - centerY * scale
+    
+    for (row in 0 until inputGridSize) {
+        for (col in 0 until inputGridSize) {
+            if (pixels[row * inputGridSize + col]) {
+                val srcX = (col - centerX) * scale + targetCenter
+                val srcY = (row - centerY) * scale + targetCenter
+                val nr = srcY.toInt(); val nc = srcX.toInt()
+                if (nr in 0 until gridSize && nc in 0 until gridSize) {
+                    result[nr * gridSize + nc] = 1.0f
+                    if (nr + 1 < gridSize) result[(nr + 1) * gridSize + nc] = 0.7f
+                    if (nc + 1 < gridSize) result[nr * gridSize + nc + 1] = 0.7f
+                }
             }
         }
     }
